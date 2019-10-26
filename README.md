@@ -34,6 +34,7 @@ rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/kinect2/sd/image_
 roslaunch obstacle_detector obstacle_detec.launch
 rviz
 ```  
+---
 
 ## YDLIDAR ROS package
 
@@ -53,10 +54,17 @@ sudo chmod 777 ./*
 
 After connecting ydlidar -
 
-Run `roslaunch ydlidar lidar_view.launch` to view the output in rviz
+a) To view output in rviz : 
+
+`roslaunch ydlidar lidar_view.launch`
+
 **OR**
-1. Run `roslaunch ydlidar lidar.launch`
-2. Open another terminal, Run - 
+
+b) To view output in terminal :
+
+`roslaunch ydlidar lidar.launch`
+
+Open another terminal, Run : 
 ```
 source devel/setup.bash
 rosrun ydlidar ydlidar_client
