@@ -48,7 +48,8 @@ Scan creates a polar map which indicates the obstacles in the 2d plane of the se
 2) Run `catkin_make` to build ydlidar_node and ydlidar_client
 3) Run these commands -
 
-```roscd ydlidar/startup
+```
+roscd ydlidar/startup
 sudo chmod 777 ./*
 `sudo sh initenv.sh
 ```
@@ -67,7 +68,8 @@ b) To view output in terminal :
 
 Open another terminal, Run : 
 
-```source devel/setup.bash
+```
+source devel/setup.bash
 rosrun ydlidar ydlidar_client
 ``` 
 
