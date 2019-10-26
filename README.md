@@ -45,9 +45,11 @@ Scan creates a polar map which indicates the obstacles in the 2d plane of the se
 1) Clone [this](https://github.com/EAIBOT/ydlidar.git) project to your catkin's workspace src folder
 2) Run `catkin_make` to build ydlidar_node and ydlidar_client
 3) Run these commands -
-`roscd ydlidar/startup`
-`sudo chmod 777 ./*`
-`sudo sh initenv.sh`
+```
+roscd ydlidar/startup
+sudo chmod 777 ./*
+`sudo sh initenv.sh
+```
 
 After connecting ydlidar -
 
@@ -55,6 +57,8 @@ Run `roslaunch ydlidar lidar_view.launch` to view the output in rviz
 **OR**
 1. Run `roslaunch ydlidar lidar.launch`
 2. Open another terminal, Run - 
-`source devel/setup.bash`
-`rosrun ydlidar ydlidar_client` 
+```
+source devel/setup.bash
+rosrun ydlidar ydlidar_client
+``` 
 
