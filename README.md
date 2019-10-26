@@ -38,7 +38,8 @@ rviz
 
 ## YDLIDAR ROS package
 
-ROS node and test application for YDLIDAR
+ROS node and test application for YDLIDAR.
+
 Scan creates a polar map which indicates the obstacles in the 2d plane of the sensor. Obstacles are indicated by `range and theta`.
 
 ### Procedure for installation
@@ -46,8 +47,8 @@ Scan creates a polar map which indicates the obstacles in the 2d plane of the se
 1) Clone [this](https://github.com/EAIBOT/ydlidar.git) project to your catkin's workspace src folder
 2) Run `catkin_make` to build ydlidar_node and ydlidar_client
 3) Run these commands -
-```
-roscd ydlidar/startup
+
+```roscd ydlidar/startup
 sudo chmod 777 ./*
 `sudo sh initenv.sh
 ```
@@ -65,8 +66,8 @@ b) To view output in terminal :
 `roslaunch ydlidar lidar.launch`
 
 Open another terminal, Run : 
-```
-source devel/setup.bash
+
+```source devel/setup.bash
 rosrun ydlidar ydlidar_client
 ``` 
 
