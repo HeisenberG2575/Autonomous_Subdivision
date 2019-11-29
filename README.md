@@ -44,9 +44,10 @@ Scan creates a polar map which indicates the obstacles in the 2d plane of the se
 
 ### Procedure for installation
 
-1) Clone [this](https://github.com/EAIBOT/ydlidar.git) project to your catkin's workspace src folder
-2) Run `catkin_make` to build ydlidar_node and ydlidar_client
-3) Run these commands -
+1) Run `source /opt/ros/melodic/setup.bash` in any directory to make it a catkin workspace
+2) Clone [this](https://github.com/EAIBOT/ydlidar.git) project to your catkin's workspace src folder
+3) Run `catkin_make` to build ydlidar_node and ydlidar_client
+4) Run these commands -
 
 ```
 roscd ydlidar/startup
