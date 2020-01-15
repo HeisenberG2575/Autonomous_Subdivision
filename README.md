@@ -74,3 +74,6 @@ source devel/setup.bash
 rosrun ydlidar ydlidar_client
 ``` 
 
+### Checking Port number
+
+Run `ls /dev/ > dev_list_1.txt` , connect YDLidar and then run `ls /dev/ | diff --suppress-common-lines -y - dev_list_1.txt`
