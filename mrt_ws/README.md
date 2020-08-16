@@ -16,7 +16,7 @@ This workspace contains a gazebo environment and a bot which can be used for tes
 - In the toolbar on left, change **Fixed Frame** to odom
 - On the bottom left, click on the `Add` button, and select RobotModel, you should be able to see the bot in RviZ now.
 - Similarly, add the laserscan by adding LaserScan after clicking on `Add` button. 
-- Change the topic under laser scan to /mtr/laser/scan and you should see some more parameters under the laserscan now.
+- Change the topic under laser scan to /mrt/laser/scan and you should see some more parameters under the laserscan now.
 5. To move the bot manually and see the RviZ markings change, in a new tab run command `rosrun teleop_twist_keyboard teleop_twist_keyboard.py` and navigate as commanded.
 6. To know how to take readings from laser scanner into the code. See file reading_lidar.py inside the motion_plan package. To run this file, run command `rosrun motion_plan reading_lidar.py`
 
