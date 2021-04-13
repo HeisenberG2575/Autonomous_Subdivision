@@ -4,8 +4,8 @@ import math
 # write all the data structures used here on the start of file
 # also give the names of variables to be initutive
 
-ROW = 9
-COL = 10
+ROW = 4
+COL = 4
 
 class Cell:
     # parent_i and parent_j are row and column index of its parent
@@ -21,9 +21,9 @@ class Cell:
 def is_valid(row, col):
     return row >= 0 and row < ROW and col >=0 and col < COL
 
-# check if the cell is blocked or not
+# check if the cell is blocked or not and return true if unblocked
 def is_unblocked(grid, row, col):
-    return grid[row][col] == 0
+    return (grid[row][col] == 1)
     
 
 # check if cell is target or not
@@ -60,7 +60,7 @@ def store_path(cell_details, dest):
         
     Path.append([row, col])
     
-    while not Path.empty():
+    while not len(Path):
         p = Path.top()
         Path.pop()
         print("->  ", p)
