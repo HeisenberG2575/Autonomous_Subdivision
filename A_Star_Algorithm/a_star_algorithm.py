@@ -41,9 +41,10 @@ cell_details = [[Cell(FLOAT_MAX, FLOAT_MAX, FLOAT_MAX, -1, -1)
 
 found_dest = False
 
-def generate_successor(grid, dest, i_succ, j_succ, i, j, constant, found_dest, open_list):
+def generate_successor(grid, dest, i_succ, j_succ, i, j, constant, open_list):
     # process only if it is a valid cell
     # print("what is i,j?", i, j)
+    global found_dest
     if is_valid(i_succ, j_succ):
         # if we've reached the destination
         if is_target(i_succ, j_succ, dest):
@@ -53,7 +54,7 @@ def generate_successor(grid, dest, i_succ, j_succ, i, j, constant, found_dest, o
             store_path(cell_details, dest)
             found_dest = True
             # print("did we find?", found_dest)
-            return 
+            return found_dest
 
         # if the successor is on the closed_list or is blocked
         # then ignore else do the following
@@ -119,6 +120,7 @@ def a_star_algorithm(grid, src, dest):
     open_list.append((0.0, (i, j)))
 
     # found_destination: initially set to false
+    global found_dest
     found_dest = False
 
     iterator = 0
@@ -136,42 +138,49 @@ def a_star_algorithm(grid, src, dest):
         closed_list[i][j] = True
 
         # ------1st successor------North-------
-        found_dest = generate_successor(grid, dest, i-1, j, i, j, 1.0, found_dest, open_list)
+        generate_successor(grid, dest, i-1, j, i, j, 1.0, open_list)
         if found_dest == True:
             return
 
         # ------2nd successor-----South-------
-        generate_successor(grid, dest, i+1, j, i, j, 1.0, found_dest, open_list)
+        generate_successor(grid, dest, i+1, j, i, j, 1.0, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------3rd successor-----East-------
-        generate_successor(grid, dest, i, j+1, i, j, 1.0, found_dest, open_list)
+        generate_successor(grid, dest, i, j+1, i, j, 1.0, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------4th successor-----West-------
-        generate_successor(grid, dest, i, j-1, i, j, 1.0, found_dest, open_list)
+        generate_successor(grid, dest, i, j-1, i, j, 1.0, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------5th successor-----North-East-------
-        generate_successor(grid, dest, i-1, j+1, i, j, 1.414, found_dest, open_list)
+        generate_successor(grid, dest, i-1, j+1, i, j, 1.414, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------6th successor-----North-West-------
-        generate_successor(grid, dest, i-1, j-1, i, j, 1.414, found_dest, open_list)
+        generate_successor(grid, dest, i-1, j-1, i, j, 1.414, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------7th successor-----South-East-------
-        generate_successor(grid, dest, i+1, j+1, i, j, 1.414, found_dest, open_list)
+        generate_successor(grid, dest, i+1, j+1, i, j, 1.414, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
         # ------8th successor-----South-West-------
-        generate_successor(grid, dest, i+1, j-1, i, j, 1.414, found_dest, open_list)
+        generate_successor(grid, dest, i+1, j-1, i, j, 1.414, open_list)
+        # print(found_dest)
         if found_dest == True:
             return
 
@@ -187,13 +196,13 @@ def a_star_algorithm(grid, src, dest):
 
 # here a 0 means a blocked cell and a 1 means an unblocked cell
 
-grid =  [[ 1, 0, 1, 0],
-         [ 1, 1, 1, 0],
-         [ 0, 1, 0, 0 ],
-         [ 1, 0, 0, 1 ]]
+# grid = [[1, 1, 0, 1],
+#         [1, 0, 1, 1],
+#         [1, 1, 0, 0],
+#         [1, 0, 0, 1]]
 
-src = [0, 0]
-dest = [1, 2]
-# path = (0, 0) -> (1,1) -> (1, 2)
+# src = [0, 0]
+# dest = [2, 1]
+# path = (0, 0) -> (1,0) -> (2, 0) -> (2,1)
 
-a_star_algorithm(grid, src, dest)
+# a_star_algorithm(grid, src, dest)

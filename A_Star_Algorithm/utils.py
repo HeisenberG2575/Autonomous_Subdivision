@@ -59,10 +59,5 @@ def store_path(cell_details, dest):
         col = temp_col
         
     Path.append([row, col])
-    
-    while not len(Path):
-        p = Path.top()
-        Path.pop()
-        print("->  ", p)
-        
-    return
+    for x in reversed(Path):
+        print(x)
