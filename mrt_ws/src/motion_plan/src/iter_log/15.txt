@@ -1,0 +1,4 @@
+(0, 0)
+from: [104, 297] to: [154, 347]
+
+Source or destination is blocked.

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from utils import is_valid, is_unblocked, is_target, Cell, COL, ROW, store_path, heuristic_func
 import sys
 import numpy as np

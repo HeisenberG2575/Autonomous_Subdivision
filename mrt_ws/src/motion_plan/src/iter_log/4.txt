@@ -1,0 +1,4 @@
+(0, 1)
+from: [340, 483] to: [390, 533]
+
+Source or destination is blocked.
