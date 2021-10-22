@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   tf
+  move_base
 )
 
 ## System dependencies are found with CMake's conventions
