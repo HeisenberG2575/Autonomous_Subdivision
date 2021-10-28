@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   move_base
   cv_bridge
+  actionlib
+  move_base_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -167,6 +169,7 @@ include_directories(
  catkin_install_python(PROGRAMS
    src/test.py
    src/image_sub.py
+   src/functions.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
