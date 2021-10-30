@@ -170,6 +170,7 @@ include_directories(
    src/test.py
    src/image_sub.py
    src/functions.py
+   src/arrow_detect_test.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
