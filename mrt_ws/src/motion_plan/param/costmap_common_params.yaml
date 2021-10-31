@@ -1,7 +1,7 @@
 obstacle_range: 5.0
 raytrace_range: 5.5
 
-footprint: [[-0.105, -0.105], [-0.105, 0.105], [0.241, 0.105], [0.241, -0.105]]
+footprint: [[-0.15, -0.15], [-0.15, 0.15], [0.31, 0.15], [0.31, -0.15]]
 #TODO
 #robot_radius: 0.105
 
@@ -74,7 +74,7 @@ obstacle_layer:
 inflation_layer:
 
   # The radius in meters to which the map inflates obstacle cost values.
-  inflation_radius: 0.55 # default: 0.55
+  inflation_radius: 0.6 # default: 0.55
 
   # A scaling factor to apply to cost values during inflation.
   cost_scaling_factor: 8.01 # default: 10.0

@@ -27,10 +27,10 @@ class client():
       def mapCallBack(self,data):
             self.mapData=data
 
-      def move_to_goal(self, xGoal,yGoal, quaternion=None, frame="link_chassis"):
+      def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame="link_chassis"
             #relative to the bot location
             #quaternion is a 4-tuple/list-x,y,z,w or Quaternion
-
+            quaternion = q
             goal = MoveBaseGoal()
 
             #set up the frame parameters
@@ -50,7 +50,7 @@ class client():
                   print('Quaternion in incorrect format')
                   goal.target_pose.pose.orientation = Quaternion(0,0,0,1)#default behavior
 
-            rospy.loginfo("Sending goal location ...")
+            rospy.loginfo("Sending goal location - ["+ str(xGoal)+', '+str(yGoal)+"] ..")
             self.ac.send_goal(goal)
 
             self.ac.wait_for_result(rospy.Duration(60))
@@ -63,7 +63,8 @@ class client():
                   rospy.loginfo("The robot failed to reach the destination")
                   return False
 
-      def move_to_off_goal(self,xGoal,yGoal, off_dist=1, quaternion=None, frame="link_chassis"):
+      def move_to_off_goal(self,xGoal,yGoal, off_dist=1.5, q=None, frame="map"):#frame="link_chassis"
+            quaternion = q
             if quaternion is None:
                   q = Quaternion(0,0,0,1)
             elif isinstance(quaternion, list) or isinstance(quaternion, tuple):
@@ -75,7 +76,7 @@ class client():
                   q = Quaternion(0,0,0,1)
             #qp = transformations.quaternion_multiply(q, [1/np.sqrt(2),0,0,1/np.sqrt(2)] )
             #rotate by 90 deg with z as the axis, to get q perpendicular
-            offset = transformations.quaternion_multiply((q.x,q.y,q.z,q.w), (0,off_dist,0,0))#move by 0.5, qpq^-1, change relative goal when stuck, here
+            offset = transformations.quaternion_multiply((q.x,q.y,q.z,q.w), (0,off_dist,0,0))
             offset = transformations.quaternion_multiply(offset, transformations.quaternion_inverse((q.x,q.y,q.z,q.w)))
             x1, y1 = xGoal+offset[0],yGoal+offset[1]
             cell1=get_cell_status(self.mapData, [x1, y1])
@@ -106,7 +107,6 @@ def get_cell_status(mapData, pt):
       Xstarty = mapData.info.origin.position.y
       width = mapData.info.width
       Data = mapData.data
-      print(resolution)
 
       index = (np.floor((pt[1]-Xstarty)/resolution)*width) + (np.floor((pt[0]-Xstartx)/resolution))
 
@@ -117,8 +117,16 @@ def get_cell_status(mapData, pt):
 
 
 def main():
+      sin45 = 1/np.sqrt(2)
       my_client = client()
-      my_client.move_to_off_goal(1,0)
+      my_client.move_to_off_goal(4,0,q=(0,0,sin45,sin45)) #4,0
+      my_client.move_to_off_goal(4,6)                   #4,6
+      my_client.move_to_off_goal(8,6,q=(0,0,sin45,-sin45))#8,6
+      my_client.move_to_off_goal(8,2)                   #8,2
+      my_client.move_to_off_goal(12,2,q=(0,0,np.cos(np.pi/8),np.sin(np.pi/8)))#12,2
+      my_client.move_to_off_goal(12,6,q=(0,0,sin45,sin45))#12,6
+      my_client.move_to_off_goal(8,10,q=(0,0,1,0))        #8,10
+      my_client.move_to_goal(-2,10, q=(0,0,1,0))          #-2,10
 
 
 if __name__ == '__main__':
