@@ -27,6 +27,16 @@ def callback(data):
   cv2.imshow("camera", current_frame)
    
   cv2.waitKey(1)
+  #template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+  #ret1, template_bin = cv2.threshold(template, 120, 255, cv.THRESH_BINARY)
+
+  # frame_grayscale = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
+  # ret2, frame_img_bin= cv2.threshold(frame_grayscale, 120, 255, cv2.THRESH_BINARY)
+  # #apply canny edge detection to the image
+  # edges = cv2.Canny(frame_img_bin,50,150,apertureSize = 3)
+  # #show what the image looks like after the application of previous functions
+  # cv2.imshow("canny'd image", edges)
+  # cv2.waitKey(0)
       
 def receive_message():
  

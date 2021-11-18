@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   actionlib
   move_base_msgs
+  rospack
 )
 
 ## System dependencies are found with CMake's conventions
@@ -125,6 +126,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  src/
 )
 
 ## Declare a C++ library
@@ -171,6 +173,7 @@ include_directories(
    src/image_sub.py
    src/functions.py
    src/arrow_detect_test.py
+   src/assigner.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
