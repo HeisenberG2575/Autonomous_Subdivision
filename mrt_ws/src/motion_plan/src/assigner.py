@@ -23,7 +23,7 @@ def main_node():
     while not rospy.is_shutdown():
         if len(my_client.completed_list) == 5:
             rospy.loginfo("End Goal found")
-            success = my_client.move_to_off_goal(12,6,q=(0,0,1/np.sqrt(2),-1/np.sqrt(2)))
+            success = my_client.move_to_goal(12,6,q=(0,0,1/np.sqrt(2),1/np.sqrt(2)))
             if success:
                 rospy.loginfo("Completed all goals")
             else:
