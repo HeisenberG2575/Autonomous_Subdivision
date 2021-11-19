@@ -206,9 +206,9 @@ class client():
                               arrow_tail = tuple(np.average([rect[0], rect[3]], axis = 0).astype(int))
                               if arrow_tail[0]-arrow_tip[0]==0:#escape possible runtime error
                                   continue
-                              print("tip-tail tan angle: ", abs((arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])))
+                              print("tip-tail tan angle: ", abs(float(arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])))
                               #Check that tan of angle of the arrow in the image from horizontal is less than 0.2(we are expecting nearly horizontal arrows)(atan(0.2) = 11.31)
-                              if abs((arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) > 0.2:
+                              if abs(float(arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) > 0.2:
                                   continue#Discard it, not a horizontal arrow
                               #cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
                               #cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre

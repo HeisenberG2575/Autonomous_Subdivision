@@ -39,12 +39,12 @@ def main_node():
             else:
                 q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                 #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
+                posx, posy, q = my_client.bot_to_map(posx, posy, q)#map frame
                 if my_client.is_complete(posx,posy,q):
                     rospy.loginfo("Already visited recently found Goal: " + str([posx,posy]))
                 else:
                     i = 1
                     #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
-                    posx, posy, q = my_client.bot_to_map(posx, posy, q)#map frame
                     my_client.add_arrow(posx, posy, q, color=(0,1,0))#Add Rviz arrow marker, map frame
                     success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1)
                     if success == True:
