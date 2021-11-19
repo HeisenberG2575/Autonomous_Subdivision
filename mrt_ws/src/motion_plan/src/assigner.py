@@ -21,6 +21,14 @@ def main_node():
     i=1 #iteration for moving just ahead of the previous goal
 
     while not rospy.is_shutdown():
+        if len(my_client.completed_list) == 5:
+            rospy.loginfo("End Goal found")
+            success = my_client.move_to_off_goal(12,6,q=(0,0,1/np.sqrt(2),-1/np.sqrt(2)))
+            if success:
+                rospy.loginfo("Completed all goals")
+            else:
+                rospy.loginfo("Failed")
+            break
         found, theta, orient = my_client.arrow_detect()#theta and orient wrt forward direction, in degree
         if found:
             posx,posy = my_client.find_obs_lidar(theta)

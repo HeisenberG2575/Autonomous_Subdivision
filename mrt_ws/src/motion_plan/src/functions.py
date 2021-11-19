@@ -358,7 +358,7 @@ def main():
       my_client.move_to_off_goal(8,6,q=(0,0,sin45,-sin45))#8,6
       my_client.move_to_off_goal(8,2)                   #8,2
       my_client.move_to_off_goal(12,2,q=(0,0,np.sin(np.pi/8),np.cos(np.pi/8)))#12,2
-      my_client.move_to_off_goal(12,6,q=(0,0,sin45,sin45))#12,6
+      my_client.move_to_off_goal(12,6,q=(0,0,sin45,sin45))#12,6#check for error, if any
       my_client.move_to_off_goal(8,10,q=(0,0,1,0))        #8,10
       my_client.move_to_goal(-2,10, q=(0,0,1,0))          #-2,10
 
