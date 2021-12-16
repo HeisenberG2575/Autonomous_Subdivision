@@ -34,4 +34,6 @@
     <remap from="scan" to="$(arg scan_topic)"/>
     <param name="DWAPlannerROS/min_vel_x" value="0.0" if="$(arg move_forward_only)" />
   </node>
+  <node name="vel_filter" pkg="motion_plan" type="vel_filter.py"/>
+  <node name="motor_cmd" pkg="motion_plan" type="motor_cmd.py"/>
 </launch>

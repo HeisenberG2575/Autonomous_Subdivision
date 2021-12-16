@@ -22,10 +22,12 @@ class client():
       def __init__(self):
             rospy.init_node('goal_client_node')
             rospy.loginfo('goal_client_node init')
+            
             #define a client for to send goal requests to the move_base server through a SimpleActionClient
             self.ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+            
             #wait for the action server to come up
-            while(not self.ac.wait_for_server(rospy.Duration.from_sec(5.0))):
+            while(not self.ac.wait_for_server(rospy.Duration.from_sec(2.0)) and not rospy.is_shutdown()):
                   rospy.loginfo("Waiting for the move_base action server to come up")
             self.listener = tf.TransformListener()
             self.listener.waitForTransform("map", "link_chassis", rospy.Time(0), rospy.Duration(10.0))
@@ -225,11 +227,11 @@ class client():
                         rospy.loginfo("error: direction not found and not None, "+str(direction))
                         found = False
             if found:
-                  global path #motion_plan pkg dir
+                  #global path #motion_plan pkg dir
                   rospy.loginfo(str([found, theta, orient]))
             #return found, theta, orient   #theta and orient wrt forward direction, in degree
-                  cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
-                  cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
+                  #cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
+                  #cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
             return found, theta, orient
                   
 

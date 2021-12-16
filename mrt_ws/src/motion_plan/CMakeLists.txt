@@ -174,6 +174,7 @@ include_directories(
    src/functions.py
    src/arrow_detect_test.py
    src/assigner.py
+   src/vel_filter.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

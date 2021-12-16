@@ -64,8 +64,9 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>gmapping</exec_depend>
   <exec_depend>amcl</exec_depend>
-  <exec_depend>move_base</exec_depend>
   <exec_depend>dwa_local_planner</exec_depend>
+  <exec_depend>hector_gazebo_plugins</exec_depend>
+  <exec_depend>move_base</exec_depend>
   <exec_depend>costmap_2d</exec_depend>
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>laser_filters</exec_depend>

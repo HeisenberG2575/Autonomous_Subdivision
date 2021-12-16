@@ -1,4 +1,0 @@
-(0, 1)
-from: [86, 201] to: [136, 251]
-
-Source is invalid.

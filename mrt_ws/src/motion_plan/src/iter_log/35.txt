@@ -1,4 +1,0 @@
-(1, 0)
-from: [317, 285] to: [367, 335]
-
-Source or destination is blocked.

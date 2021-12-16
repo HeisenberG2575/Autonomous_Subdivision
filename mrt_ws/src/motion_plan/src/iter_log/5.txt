@@ -1,4 +1,0 @@
-(0, 0)
-from: [286, 498] to: [336, 548]
-
-Source or destination is blocked.

@@ -1,4 +1,0 @@
-(1, 1)
-from: [519, 551] to: [569, 601]
-
-Destination not found.

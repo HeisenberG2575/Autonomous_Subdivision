@@ -100,10 +100,10 @@
       <pose frame=''>11.9824 -35.5322 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>289 504000000</sim_time>
-      <real_time>130 198160206</real_time>
-      <wall_time>1637349542 694506138</wall_time>
-      <iterations>15521</iterations>
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
+      <wall_time>0</wall_time>
+      <iterations>1</iterations>
       <model name='Construction Cone_1'>
         <pose frame=''>12.9925 -9.53226 -0.019591 0.005559 -0.004619 0.000101</pose>
         <scale>1 1 1</scale>

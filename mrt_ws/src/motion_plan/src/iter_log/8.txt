@@ -1,4 +1,0 @@
-(1, 1)
-from: [364, 554] to: [414, 604]
-
-Destination not found.
