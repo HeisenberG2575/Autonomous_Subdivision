@@ -1,0 +1,17 @@
+material aruco/standard_opp
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco_opp.jpeg
+        scale 1 1
+      }
+    }
+  }
+}

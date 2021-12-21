@@ -1,0 +1,17 @@
+material aruco/standard
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco.jpeg
+        scale 1 1
+      }
+    }
+  }
+}

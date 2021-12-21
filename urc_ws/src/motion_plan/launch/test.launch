@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <node name="test" pkg="motion_plan" type="test.py" output="screen" cwd="node">
+    <param name="path" value="$(find motion_plan)/src/" />
+  </node>
+
+</launch>
