@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="rover" xmlns:xacro="https://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find bot_description)/urdf/rover.gazebo" />
+  <xacro:include filename="$(find bot_description)/urdf/materials.xacro" />
+
+  <link
+    name="root_link">
+  </link>
+  <joint name="joint_root" type="fixed">
+    <origin xyz="-0.276421885520658 0.526119109974194 -0.013679693338444" rpy="0 0 0"/>
+    <parent link="root_link"/>
+    <child link="base_link"/>
+  </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.276421885520658 -0.526119109974194 0.313679693338444"
+        rpy="0 0 0" />
+      <mass
+        value="1.8895154681622" />
+      <inertia
+        ixx="0.0185325631339801"
+        ixy="-1.25714419683864E-10"
+        ixz="2.61341865451838E-12"
+        iyy="0.0305222302221915"
+        iyz="2.61365866354932E-10"
+        izz="0.0483755152273041" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="sensor_laser">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1" />
+      <!-- RANDOM INERTIA BELOW -->
+      <inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.05" length="0.05"/>
+      </geometry>
+      <material name="white" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_sensor_laser" type="fixed">
+    <origin xyz="0.276421885520658 -0.526119109974194 0.413679693338444" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="sensor_laser"/>
+  </joint>
+
+  <!-- Camera -->
+  <link name="camera_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.005"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.005"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.56421885520658 -0.526119109974194 0.403679693338444" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- IMU -->
+  <link name="imu_link">
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.05"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.005"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0.276421885520658 -0.526119109974194 0.313679693338444" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+
+  <link
+    name="Left_rocker">
+    <inertial>
+      <origin
+        xyz="0.185418634068466 -0.163911860850707 0.0450713948908623"
+        rpy="0 0 0" />
+      <mass
+        value="0.7268729061659" />
+      <inertia
+        ixx="0.00205441636007148"
+        ixy="0.00158097053004651"
+        ixz="2.13594494405792E-20"
+        iyy="0.00359288715176389"
+        iyz="1.38633225296231E-19"
+        izz="0.00427740926676352" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Left_rocker.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Left_rocker.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="revolute">
+    <origin
+      xyz="0.296752726582214 -0.789119109811768 0.334089636553303"
+      rpy="1.5707963267949 -0.0664800851997717 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="Left_rocker" />
+    <axis
+      xyz="0 0 1" />
+    <limit effort="30" velocity="1.0" lower="-0.7" upper="0.7" />
+    <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-0.5" soft_upper_limit="0.5" />
+  </joint>
+  <link
+    name="wheel_4">
+    <inertial>
+      <origin
+        xyz="0.122486785294298 0.0113075602698824 -0.1381370381939"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933181454509" />
+      <inertia
+        ixx="0.010334421333816"
+        ixy="0.00020698746086735"
+        ixz="-0.00254065913162432"
+        iyy="0.00810063924922333"
+        iyz="-0.0002333436569979"
+        izz="0.0109492888124208" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_4"
+    type="continuous">
+    <origin
+      xyz="0.430706658870728 -0.301584049298418 0.0431356967544558"
+      rpy="3.06022079612454 -0.723612333401865 -1.2268238039208" />
+    <parent
+      link="Left_rocker" />
+    <child
+      link="wheel_4" />
+    <axis
+      xyz="-0.662096136877245 -0.0609143340990603 0.74693918723916" />
+  </joint>
+  <link
+    name="Left_bogie">
+    <inertial>
+      <origin
+        xyz="1.419766267996E-06 -0.175994136178262 0.06241615657147"
+        rpy="0 0 0" />
+      <mass
+        value="0.774726593462201" />
+      <inertia
+        ixx="0.00197108894015216"
+        ixy="-2.39240512687263E-08"
+        ixz="2.78027614676879E-12"
+        iyy="0.00198483943214216"
+        iyz="-4.86809775413585E-20"
+        izz="0.00141940710212113" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Left_bogie.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Left_bogie.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint3"
+    type="revolute">
+    <origin
+      xyz="-0.239892989434385 -0.0771678615480115 0.002"
+      rpy="0 0 -0.117420141418978" />
+    <parent
+      link="Left_rocker" />
+    <child
+      link="Left_bogie" />
+    <axis
+      xyz="0 0 1" />
+    <limit effort="30" velocity="1.0" lower="-1.3" upper="0.6" />
+    <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-1.2" soft_upper_limit="0.5" />
+  </joint>
+  <link
+    name="wheel_5">
+    <inertial>
+      <origin
+        xyz="0.122486785295431 0.0113075602696734 -0.138137038196328"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933181485893" />
+      <inertia
+        ixx="0.010334421333825"
+        ixy="0.000206987460861863"
+        ixz="-0.00254065913160712"
+        iyy="0.00810063924924904"
+        iyz="-0.000233343656992006"
+        izz="0.0109492888124459" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_5"
+    type="continuous">
+    <origin
+      xyz="0.215141300051734 -0.215141300051736 0.0411356967544564"
+      rpy="3.06022079612454 -0.723612333401866 -2.66674671303329" />
+    <parent
+      link="Left_bogie" />
+    <child
+      link="wheel_5" />
+    <axis
+      xyz="-0.662096136877246 -0.0609143340990604 0.746939187239159" />
+  </joint>
+  <link
+    name="wheel_6">
+    <inertial>
+      <origin
+        xyz="0.12248678529543 0.0113075602696731 -0.138137038196328"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933181485892" />
+      <inertia
+        ixx="0.0103344213338249"
+        ixy="0.000206987460861854"
+        ixz="-0.00254065913160709"
+        iyy="0.00810063924924898"
+        iyz="-0.000233343656992002"
+        izz="0.0109492888124458" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_6.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_6.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_6"
+    type="continuous">
+    <origin
+      xyz="-0.215141300051734 -0.215141300051736 0.0411356967544564"
+      rpy="3.06022079612454 -0.723612333401864 -2.66674671303329" />
+    <parent
+      link="Left_bogie" />
+    <child
+      link="wheel_6" />
+    <axis
+      xyz="-0.662096136877245 -0.0609143340990604 0.74693918723916" />
+  </joint>
+  <link
+    name="Right_rocker">
+    <inertial>
+      <origin
+        xyz="0.185418634068468 -0.163911860850708 0.138928605109138"
+        rpy="0 0 0" />
+      <mass
+        value="0.726872906165902" />
+      <inertia
+        ixx="0.00205441636007149"
+        ixy="0.00158097053004652"
+        ixz="-1.30171030606125E-19"
+        iyy="0.00359288715176391"
+        iyz="1.30037112342813E-20"
+        izz="0.00427740926676354" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Right_rocker.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Right_rocker.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="fixed">
+    <origin
+      xyz="0.296752726582215 -0.0791191098117673 0.334089636553303"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="Right_rocker" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="wheel_1">
+    <inertial>
+      <origin
+        xyz="0.0292210742161548 0.00272690504878421 -0.032919969934334"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933180107678" />
+      <inertia
+        ixx="0.0103344213329832"
+        ixy="0.000206987461048729"
+        ixz="-0.00254065913223699"
+        iyy="0.00810063924811789"
+        iyz="-0.000233343657269671"
+        izz="0.0109492888118564" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_1"
+    type="continuous">
+    <origin
+      xyz="0.430706658870731 -0.301584049298419 0"
+      rpy="-0.0813718574652464 0.723612333401871 -0.0308110739107779" />
+    <parent
+      link="Right_rocker" />
+    <child
+      link="wheel_1" />
+    <axis
+      xyz="0.66209613687725 0.0609143340990546 -0.746939187239156" />
+  </joint>
+  <link
+    name="Right_bogie">
+    <inertial>
+      <origin
+        xyz="1.41637915933995E-06 -0.175994134676824 0.119583843695714"
+        rpy="0 0 0" />
+      <mass
+        value="0.774726598460108" />
+      <inertia
+        ixx="0.00197108896625147"
+        ixy="-2.37122824901633E-08"
+        ixz="2.78027620509222E-12"
+        iyy="0.00198483942142038"
+        iyz="3.17481259252144E-20"
+        izz="0.00141940711749666" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Right_bogie.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/Right_bogie.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="revolute">
+    <origin
+      xyz="-0.239892989434383 -0.0771678615480127 0"
+      rpy="0 0 0" />
+    <parent
+      link="Right_rocker" />
+    <child
+      link="Right_bogie" />
+    <axis
+      xyz="0 0 1" />
+    <limit effort="30" velocity="1.0" lower="-1.3" upper="0.6" />
+    <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-1.2" soft_upper_limit="0.5" />
+  </joint>
+  <link
+    name="wheel_2">
+    <inertial>
+      <origin
+        xyz="0.0292210742161546 0.00272690504878436 -0.0329199699343344"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933180107679" />
+      <inertia
+        ixx="0.0103344213329833"
+        ixy="0.000206987461048738"
+        ixz="-0.00254065913223702"
+        iyy="0.00810063924811796"
+        iyz="-0.000233343657269668"
+        izz="0.0109492888118565" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_2"
+    type="continuous">
+    <origin
+      xyz="0.215141300051734 -0.215141300051736 0"
+      rpy="-0.0813718574652462 0.723612333401868 -0.030811073910772" />
+    <parent
+      link="Right_bogie" />
+    <child
+      link="wheel_2" />
+    <axis
+      xyz="0.662096136877248 0.0609143340990548 -0.746939187239158" />
+  </joint>
+  <link
+    name="wheel_3">
+    <inertial>
+      <origin
+        xyz="0.0292210742161553 0.00272690504878389 -0.0329199699343338"
+        rpy="0 0 0" />
+      <mass
+        value="1.56933180107678" />
+      <inertia
+        ixx="0.0103344213329832"
+        ixy="0.000206987461048735"
+        ixz="-0.00254065913223699"
+        iyy="0.00810063924811789"
+        iyz="-0.00023334365726967"
+        izz="0.0109492888118564" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://bot_description/meshes/wheel_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel_joint_3"
+    type="continuous">
+    <origin
+      xyz="-0.215141300051734 -0.215141300051736 0"
+      rpy="-0.0813718574652462 0.723612333401868 -0.0308110739107748" />
+    <parent
+      link="Right_bogie" />
+    <child
+      link="wheel_3" />
+    <axis
+      xyz="0.662096136877248 0.0609143340990548 -0.746939187239158" />
+  </joint>
+</robot>

@@ -4,7 +4,7 @@
   <arg name="cmd_vel_topic" default="/cmd_vel" />
   <arg name="odom_topic" default="odom" />
   <arg name="scan_topic" default="/scan_filtered" />
-  <arg name="base_frame"  default="link_chassis"/>
+  <arg name="base_frame"  default="base_link"/>
   <arg name="global_frame"  default="map"/>
   <arg name="odom_frame"  default="odom"/>
   <arg name="move_forward_only" default="false"/>

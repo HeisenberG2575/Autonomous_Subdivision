@@ -17,6 +17,7 @@ import cv2
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
+ROOT_LINK = "root_link"
 
 class client():
       def __init__(self):
@@ -25,12 +26,13 @@ class client():
             
             #define a client for to send goal requests to the move_base server through a SimpleActionClient
             self.ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+            rospy.loginfo('move_base client created')
             
             #wait for the action server to come up
             while(not self.ac.wait_for_server(rospy.Duration.from_sec(2.0)) and not rospy.is_shutdown()):
                   rospy.loginfo("Waiting for the move_base action server to come up")
             self.listener = tf.TransformListener()
-            self.listener.waitForTransform("map", "link_chassis", rospy.Time(0), rospy.Duration(10.0))
+            self.listener.waitForTransform("map", ROOT_LINK, rospy.Time(0), rospy.Duration(10.0))
             self.mapData = OccupancyGrid()
             rospy.Subscriber('/map', OccupancyGrid, self.mapCallBack)
             rospy.wait_for_message('/mrt/camera1/image_raw',Image, timeout=5)
@@ -52,7 +54,7 @@ class client():
             ps = PoseStamped()
 
             #set up the frame parameters
-            ps.header.frame_id = "link_chassis"
+            ps.header.frame_id = ROOT_LINK
             ps.header.stamp = rospy.Time.now()
 
             ps.pose.position = Point(pos_x, pos_y, 0)
@@ -69,12 +71,12 @@ class client():
             new_ps.pose.orientation.y = 0
             return new_ps.pose.position.x, new_ps.pose.position.y, new_ps.pose.orientation
 
-      def send_goal(self, xGoal,yGoal, q=None, frame="map"):#frame="link_chassis"
+      def send_goal(self, xGoal,yGoal, q=None, frame="map"):#frame=ROOT_LINK
             #relative to the bot location
             #quaternion is a 4-tuple/list-x,y,z,w or Quaternion
             goal = MoveBaseGoal()
 
-            if frame == "link_chassis":
+            if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
                   frame = "map"
             #set up the frame parameters
@@ -97,7 +99,7 @@ class client():
             self.add_arrow(xGoal, yGoal, q)
             self.ac.send_goal(goal)
 
-      def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame="link_chassis"
+      def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame=ROOT_LINK
             self.send_goal(xGoal,yGoal, q, frame)
 
             self.ac.wait_for_result(rospy.Duration(60))
@@ -110,8 +112,8 @@ class client():
                   rospy.loginfo("The robot failed to reach the destination")
                   return False
 
-      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):#frame="link_chassis"#TODO: map frame case
-            if frame == "link_chassis":
+      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):#frame=ROOT_LINK#TODO: map frame case
+            if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
                   frame = "map"
             q = uncast_quaternion(q)
