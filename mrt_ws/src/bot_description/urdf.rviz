@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 400
   - Class: rviz/Selection
@@ -82,6 +84,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        ball-left-down:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ball-right-down:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base_link:
           Alpha: 1
           Show Axes: false
@@ -92,12 +104,81 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        connector-link-1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        connector-link-2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         imu_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
+        left-rod:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right-rod:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        root_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         sensor_laser:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        socket-left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        socket-left-down:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        socket-right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        socket-right-down:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        triangle-ball-left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        triangle-ball-right:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        triangle-connector:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        triangle-left:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        triangle-right:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -138,11 +219,122 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        Left_bogie:
+          Value: false
+        Left_rocker:
+          Value: false
+        Right_bogie:
+          Value: false
+        Right_rocker:
+          Value: false
+        ball-left-down:
+          Value: false
+        ball-right-down:
+          Value: false
+        base_link:
+          Value: true
+        camera_link:
+          Value: false
+        connector-link-1:
+          Value: false
+        connector-link-2:
+          Value: false
+        imu_link:
+          Value: false
+        left-rod:
+          Value: false
+        right-rod:
+          Value: false
+        root_link:
+          Value: true
+        sensor_laser:
+          Value: false
+        socket-left:
+          Value: false
+        socket-left-down:
+          Value: false
+        socket-right:
+          Value: false
+        socket-right-down:
+          Value: false
+        triangle-ball-left:
+          Value: false
+        triangle-ball-right:
+          Value: false
+        triangle-connector:
+          Value: false
+        triangle-left:
+          Value: false
+        triangle-right:
+          Value: false
+        wheel_1:
+          Value: false
+        wheel_2:
+          Value: false
+        wheel_3:
+          Value: false
+        wheel_4:
+          Value: false
+        wheel_5:
+          Value: false
+        wheel_6:
+          Value: false
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        root_link:
+          base_link:
+            Left_rocker:
+              Left_bogie:
+                wheel_5:
+                  {}
+                wheel_6:
+                  {}
+              ball-left-down:
+                {}
+              wheel_4:
+                {}
+            Right_rocker:
+              Right_bogie:
+                wheel_2:
+                  {}
+                wheel_3:
+                  {}
+              ball-right-down:
+                {}
+              wheel_1:
+                {}
+            camera_link:
+              {}
+            connector-link-1:
+              triangle-left:
+                triangle-ball-left:
+                  {}
+                triangle-connector:
+                  {}
+            connector-link-2:
+              triangle-right:
+                triangle-ball-right:
+                  {}
+            imu_link:
+              {}
+            sensor_laser:
+              {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: root_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -166,25 +358,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.8979061841964722
+      Distance: 1.9769524335861206
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.12308380752801895
-        Y: -0.564288854598999
-        Z: 0.07834769040346146
+        X: -0.044999007135629654
+        Y: -0.040802277624607086
+        Z: -0.11588582396507263
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5103982090950012
+      Pitch: 0.35539838671684265
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.5503976941108704
+      Yaw: 0.4103972315788269
     Saved: ~
 Window Geometry:
   Displays:

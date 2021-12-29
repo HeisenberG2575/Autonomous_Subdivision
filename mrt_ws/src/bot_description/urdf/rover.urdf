@@ -12,7 +12,7 @@
     name="root_link">
   </link>
   <joint name="joint_root" type="fixed">
-    <origin xyz="-0.27642 0.52612 -0.01368" rpy="0 0 0"/>
+    <origin xyz="0.276421885520658 -0.526119109974194 -0.213679693338444" rpy="0 0 3.1415926"/>
     <parent link="root_link"/>
     <child link="base_link"/>
   </joint>
@@ -83,7 +83,7 @@
   </link>
 
   <joint name="joint_sensor_laser" type="fixed">
-    <origin xyz="0.276421885520658 -0.526119109974194 0.413679693338444" rpy="0 0 0"/>
+    <origin xyz="0.276421885520658 -0.526119109974194 0.413679693338444" rpy="0 0 3.1415926"/>
     <parent link="base_link"/>
     <child link="sensor_laser"/>
   </joint>
@@ -113,7 +113,7 @@
   </link>
 
   <joint name="camera_joint" type="fixed">
-    <origin xyz="0.56421885520658 -0.526119109974194 0.403679693338444" rpy="0 0 0"/>
+    <origin xyz="-0.06421885520658 -0.526119109974194 0.403679693338444" rpy="0 0 3.1415926"/>
     <parent link="base_link"/>
     <child link="camera_link"/>
   </joint>
