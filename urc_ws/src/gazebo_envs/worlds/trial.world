@@ -1031,10 +1031,10 @@
       </link>
     </model>
     <state world_name='default'>
-      <sim_time>1283 522000000</sim_time>
-      <real_time>1471 246509648</real_time>
-      <wall_time>1597235601 264175648</wall_time>
-      <iterations>1283522</iterations>
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
+      <wall_time>0</wall_time>
+      <iterations>0</iterations>
       <model name='ground_plane'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <scale>1 1 1</scale>

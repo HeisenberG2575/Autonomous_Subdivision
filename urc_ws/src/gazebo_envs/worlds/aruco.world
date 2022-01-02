@@ -1030,10 +1030,10 @@
       </link>
     </model>
     <state world_name='default'>
-      <sim_time>47 121000000</sim_time>
-      <real_time>110 77106884</real_time>
-      <wall_time>1640073153 835668523</wall_time>
-      <iterations>47121</iterations>
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
+      <wall_time>0</wall_time>
+      <iterations>0</iterations>
       <model name='aruco_wood_thin'>
         <pose frame=''>0.00017 -9.99982 0.297628 -1.5e-05 -3.9e-05 0.009567</pose>
         <scale>1 1 1</scale>

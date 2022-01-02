@@ -17,6 +17,7 @@ import cv2
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
+ROOT_LINK = "link_chassis"
 
 class client():
       def __init__(self):
@@ -30,7 +31,7 @@ class client():
             while(not self.ac.wait_for_server(rospy.Duration.from_sec(2.0)) and not rospy.is_shutdown()):
                   rospy.loginfo("Waiting for the move_base action server to come up")
             self.listener = tf.TransformListener()
-            self.listener.waitForTransform("map", "link_chassis", rospy.Time(0), rospy.Duration(10.0))
+            self.listener.waitForTransform("map", ROOT_LINK, rospy.Time(0), rospy.Duration(10.0))
             self.mapData = OccupancyGrid()
             rospy.Subscriber('/map', OccupancyGrid, self.mapCallBack)
             rospy.wait_for_message('/mrt/camera1/image_raw',Image, timeout=5)
@@ -38,7 +39,7 @@ class client():
             rospy.Subscriber("/mrt/laser/scan", LaserScan, self.lidar_callback)
             self.frame = None
             self.lidar_data = None
-            self.marker_array_pub = rospy.Publisher('/detected_arrow',MarkerArray,queue_size=10)
+            self.marker_array_pub = rospy.Publisher('/detected_marker',MarkerArray,queue_size=10)
             self.marker_array = MarkerArray()
             self.marker_count = 0
             self.completed_list = []
@@ -52,7 +53,7 @@ class client():
             ps = PoseStamped()
 
             #set up the frame parameters
-            ps.header.frame_id = "link_chassis"
+            ps.header.frame_id = ROOT_LINK
             ps.header.stamp = rospy.Time.now()
 
             ps.pose.position = Point(pos_x, pos_y, 0)
@@ -69,12 +70,12 @@ class client():
             new_ps.pose.orientation.y = 0
             return new_ps.pose.position.x, new_ps.pose.position.y, new_ps.pose.orientation
 
-      def send_goal(self, xGoal,yGoal, q=None, frame="map"):#frame="link_chassis"
+      def send_goal(self, xGoal,yGoal, q=None, frame="map"):#frame=ROOT_LINK
             #relative to the bot location
             #quaternion is a 4-tuple/list-x,y,z,w or Quaternion
             goal = MoveBaseGoal()
 
-            if frame == "link_chassis":
+            if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
                   frame = "map"
             #set up the frame parameters
@@ -83,21 +84,12 @@ class client():
 
             goal.target_pose.pose.position =  Point(xGoal,yGoal,0)
             goal.target_pose.pose.orientation = recast_quaternion(q)
-            # if quaternion is None:
-            #       goal.target_pose.pose.orientation = Quaternion(0,0,0,1)
-            # elif isinstance(quaternion, list) or isinstance(quaternion, tuple):
-            #       goal.target_pose.pose.orientation = Quaternion(*quaternion)
-            # elif isinstance(quaternion,Quaternion):
-            #       goal.target_pose.pose.orientation = quaternion
-            # else:
-            #       print('Quaternion in incorrect format')
-            #       goal.target_pose.pose.orientation = Quaternion(0,0,0,1)#default behavior
 
             rospy.loginfo("Sending goal location - ["+ str(xGoal)+', '+str(yGoal)+"] ..")
             self.add_arrow(xGoal, yGoal, q)
             self.ac.send_goal(goal)
 
-      def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame="link_chassis"
+      def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame=ROOT_LINK
             self.send_goal(xGoal,yGoal, q, frame)
 
             self.ac.wait_for_result(rospy.Duration(60))
@@ -110,8 +102,8 @@ class client():
                   rospy.loginfo("The robot failed to reach the destination")
                   return False
 
-      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):#frame="link_chassis"#TODO: map frame case
-            if frame == "link_chassis":
+      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):#frame=ROOT_LINK#TODO: map frame case
+            if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
                   frame = "map"
             q = uncast_quaternion(q)

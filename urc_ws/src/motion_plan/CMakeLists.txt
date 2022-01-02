@@ -169,12 +169,13 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   src/test.py
    src/image_sub.py
    src/functions.py
    src/arrow_detect_test.py
    src/assigner.py
    src/vel_filter.py
+   src/motor_cmd.py
+   src/gps_test.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
