@@ -17,11 +17,13 @@
       <updateRate>20</updateRate>
       <leftJoint>joint_left_wheel</leftJoint>
       <rightJoint>joint_right_wheel</rightJoint>
+      <publishTf>false</publishTf>
+      <publishOdomTF>false</publishOdomTF>
       <publishWheelTF>false</publishWheelTF>
       <publishWheelJointState>true</publishWheelJointState>
       <wheelSeparation>0.4</wheelSeparation>
-      <wheelDiameter>0.2</wheelDiameter>
-      <torque>0.1</torque><!-- _filtered -->
+      <wheelDiameter>0.05</wheelDiameter>
+      <torque>0.0</torque><!-- _filtered -->
       <commandTopic>cmd_vel</commandTopic>
       <odometryTopic>odom</odometryTopic>
       <odometryFrame>odom</odometryFrame>
@@ -117,7 +119,7 @@
         <xyzOffset>0 0 0</xyzOffset>
         <rpyOffset>0 0 0</rpyOffset>
         <frameName>imu_link</frameName>
-        <initialOrientationAsReference>false</initialOrientationAsReference>
+        <initialOrientationAsReference>true</initialOrientationAsReference>
       </plugin>
       <pose>0 0 0 0 0 0</pose>
     </sensor>
@@ -132,9 +134,9 @@
       <topicName>fix</topicName>
       <velocityTopicName>fix_velocity</velocityTopicName>
       <drift>0.0 0.0 0.0</drift>
-      <gaussianNoise>0.01 0.01 0.01</gaussianNoise>
+      <gaussianNoise>0.0001 0.0001 0.0001</gaussianNoise>
       <velocityDrift>0 0 0</velocityDrift>
-      <velocityGaussianNoise>0.001 0.001 0.001</velocityGaussianNoise>
+      <velocityGaussianNoise>0.00000 0.00000 0.00000</velocityGaussianNoise>
     </plugin>
   </gazebo>
 </robot>

@@ -12,7 +12,7 @@ class gps_tester():
 	def __init__(self):
 		rospy.init_node('gps_test_node')
 		rospy.loginfo('gps_test_node init')
-		self.olat, self.olon = 49.90013, 8.89998
+		self.olat, self.olon = 49.8999997, 8.90000001
 		self.br = tf2_ros.TransformBroadcaster()
 		self.marker_array = MarkerArray()
 		self.marker_count = 1
@@ -21,14 +21,24 @@ class gps_tester():
 		self.marker_array_pub.publish(self.marker_array)
 		rospy.Subscriber('/fix', NavSatFix, self.gps_callback)
 		rospy.Subscriber('/imu', Imu, self.imu_callback)
+		rospy.wait_for_message('/imu',NavSatFix, timeout=5)
 		rospy.wait_for_message('/fix',NavSatFix, timeout=5)
     
 
     
+	def update_init_latlon(self, lat, lon):
+		self.olat = lat
+		self.olon = lon
 
 	def gps_callback(self, data):
 		lat, lon = data.latitude, data.longitude
-		self.update_pose(*gc.ll2xy(lat,lon,self.olat,self.olon))
+		y, x = gc.ll2xy(lat,lon,self.olat,self.olon)
+		self.update_pose(x, -y)
+
+	def xy2gps(self, x, y):
+		return gc.xy2ll(x,y,self.olat,self.olon)
+	def gps2xy(self, lat, lon):
+		return gc.ll2xy(lat,lon,self.olat,self.olon)
 
 	def imu_callback(self, data):
 		self.q = data.orientation
@@ -38,17 +48,17 @@ class gps_tester():
 			if m.id == 0:
 				m.pose = Pose(Point(x, y, 0), self.q)
 				self.marker_array_pub.publish(self.marker_array)
-				# t = TransformStamped()
+				t = TransformStamped()
 
-				# t.header.stamp = rospy.Time.now()
-				# t.header.frame_id = "map"
-				# t.child_frame_id = "link_chassis"
-				# t.transform.translation = Point(x, y, 0)
-				# t.transform.rotation = self.q
-				# self.br.sendTransform(t)
+				t.header.stamp = rospy.Time.now()
+				t.header.frame_id = "map"
+				t.child_frame_id = "link_chassis"
+				t.transform.translation = Point(x, y, 0)
+				t.transform.rotation = self.q
+				self.br.sendTransform(t)
 				return
 
-	def add_arrow(self, pos_x, pos_y, q, color = (0.2,0.5,1.0)):#color = (r,g,b), in [0,1]
+	def add_arrow(self, pos_x, pos_y, q=None, color = (0.2,0.7,0.2)):#color = (r,g,b), in [0,1]
 		marker = make_arrow_marker(Pose(Point(pos_x, pos_y, 0), recast_quaternion(q)), self.marker_count, color)
 
 		self.marker_array.markers.append(marker)
@@ -92,6 +102,9 @@ if __name__ == '__main__':
 	try:
 		my_tester = gps_tester()
 		print("my_tester created")
+		my_tester.add_arrow(10,0)
+		ps = my_tester.gps2xy(*my_tester.xy2gps(10,0))
+		my_tester.add_arrow(*ps, color=(1,0,0))
 		rospy.spin()
 	except rospy.ROSInterruptException:
 		print('Exiting... ')
