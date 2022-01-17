@@ -12,12 +12,6 @@ def main_node():
     my_client = client()
     rate = rospy.Rate(5)
     prev_x,prev_y, prev_q = my_client.bot_to_map(0,0, (0,0,0,1)) #prev always in map frame
-    # = (0,0,0,1)#TODO change prev here to initial bot location which may not be 0
-    #my_client.move_to_goal(0.5,0)
-    #x,y,q =  1,0,(0,0,np.sin(np.pi/8), np.cos(np.pi/8))
-    #print(x,y,q)
-    #my_client.move_to_off_goal(*my_client.bot_to_map(x,y,q))
-    #print(x,y,q)
     i=1 #iteration for moving just ahead of the previous goal
 
     while not rospy.is_shutdown():

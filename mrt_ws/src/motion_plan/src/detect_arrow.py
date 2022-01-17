@@ -66,22 +66,22 @@ def arrow_detect(img):
                         arrow_tip = find_tip(approx[:,0,:], hull.squeeze())
                         rect, dirct = find_tail_rect(approx[:,0,:], hull.squeeze())
                         if arrow_tip and rect is not None:
-                              cv2.drawContours(img, [cnt], -1, (0, 255, 0), 2)
-                              cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
-                              cv2.circle(img, arrow_tip, 3, (0, 0, 255), cv2.FILLED)
                               #cv2.polylines(img, [rect],  True, (0, 0, 255), 2)
                               arrow_tail = tuple(np.average([rect[0], rect[3]], axis = 0).astype(int))
                               if arrow_tail[0]-arrow_tip[0]==0:
                                   continue
-                              print("tip-tail tan angle: ",abs((arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) )
+                              print("tip-tail tan angle: ",abs(float(arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) )
                               #Check that tan of angle of the arrow in the image from horizontal is less than 0.2(we are expecting nearly horizontal arrows)(atan(0.2) = 11.31)
-                              if abs((arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) > 0.2:
+                              if abs(float(arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) > 0.2:
                                   continue#Discard it, not a horizontal arrow
                               #cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
                               #cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre
                               theta = -(np.average([arrow_tail[0], arrow_tip[0]])/(np.shape(img)[0]) - 0.5)*45*2#linear estimate, assuming camera horizontal range from -45 to 45
                               direction = dirct#TODO multiple arrow case
                               found = True
+                              cv2.drawContours(img, [cnt], -1, (0, 255, 0), 2)
+                              cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
+                              cv2.circle(img, arrow_tip, 3, (0, 0, 255), cv2.FILLED)
                               print("arrow_x_img: "+str(np.average(rect, axis=0)[0] ))
             if direction is not None: #TODO: Improve upon this naive orientation
                   if direction == 1:  #Right
@@ -107,6 +107,10 @@ if __name__ == '__main__':
     capture = cv2.VideoCapture(0)
     while True:
         ret_val, frame = capture.read()
+        if ret_val == False:
+            print("image/video error")
+            time.sleep(1)
+            continue
         found, theta, orient, direction, output = arrow_detect(frame)
         if found == False:
             continue

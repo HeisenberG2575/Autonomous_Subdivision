@@ -33,7 +33,7 @@ class client():
                   rospy.loginfo("Waiting for the move_base action server to come up")
             self.listener = tf.TransformListener()
             self.listener.waitForTransform("map", ROOT_LINK, rospy.Time(0), rospy.Duration(10.0))
-            self.mapData = OccupancyGrid()
+            self.mapData = OccupancyGrid()#map
             rospy.Subscriber('/map', OccupancyGrid, self.mapCallBack)
             rospy.wait_for_message('/mrt/camera1/image_raw',Image, timeout=5)
             rospy.Subscriber('/mrt/camera1/image_raw', Image, self.cam_callback)
