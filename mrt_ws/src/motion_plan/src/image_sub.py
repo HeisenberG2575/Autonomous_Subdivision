@@ -22,7 +22,7 @@ def callback(data):
    
   # Convert ROS Image message to OpenCV image
   current_frame = br.imgmsg_to_cv2(data)
-  cv2.imwrite('/home/khush/Downloads/frame6.jpg', current_frame)
+  cv2.imwrite('/home/khush/Downloads/frame13.jpg', current_frame)
   # Display image
   cv2.imshow("camera", current_frame)
    
