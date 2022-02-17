@@ -70,6 +70,7 @@
   <exec_depend>costmap_2d</exec_depend>
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>laser_filters</exec_depend>
+  <exec_depend>map_server</exec_depend>
 
 
 

@@ -176,6 +176,8 @@ include_directories(
    src/vel_filter.py
    src/motor_cmd.py
    src/gps_test.py
+   src/imu_gps_publisher.py
+   src/cov_calculator.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

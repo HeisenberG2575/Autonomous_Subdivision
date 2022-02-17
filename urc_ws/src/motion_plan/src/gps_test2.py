@@ -4,7 +4,8 @@ import rospy
 import sys
 import tf2_ros
 import geonav_transform.geonav_conversions as gc
-from sensor_msgs.msg import NavSatFix, Imu
+from std_msgs import Float32MultiArray
+# from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Point, Quaternion, TransformStamped, Pose
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -12,18 +13,21 @@ class gps_tester():
 	def __init__(self):
 		rospy.init_node('gps_test_node')
 		rospy.loginfo('gps_test_node init')
-		self.olat, self.olon = 19.13079235, 72.91834925#49.8999997, 8.90000001
-		self.q = Quaternion()
+		self.olat, self.olon = 49.8999997, 8.90000001 #set base lat, lon here (or update later using function below)
 		self.br = tf2_ros.TransformBroadcaster()
 		self.marker_array = MarkerArray()
 		self.marker_count = 1
 		self.marker_array_pub = rospy.Publisher('/detected_marker',MarkerArray,queue_size=10)
 		self.marker_array.markers.append(make_arrow_marker(ps=Pose(), id=0, color=(0, 0.3, 0.5)))
 		self.marker_array_pub.publish(self.marker_array)
-		rospy.Subscriber('/fix', NavSatFix, self.gps_callback)
-		rospy.Subscriber('/imu', Imu, self.imu_callback)
-		rospy.wait_for_message('/imu',Imu, timeout=5)
-		rospy.wait_for_message('/fix',NavSatFix, timeout=5)
+		# rospy.Subscriber('/fix', NavSatFix, self.gps_callback)
+		# rospy.Subscriber('/imu', Imu, self.imu_callback)
+		# rospy.wait_for_message('/imu',Imu, timeout=5)
+		# rospy.wait_for_message('/fix',NavSatFix, timeout=5)
+		rospy.Subscriber('/LatLon', Float64MultiArray, self.gps_callback)
+		rospy.Subscriber('/IMU', Float32MultiArray, self.imu_callback)
+		rospy.wait_for_message('/LatLon',Float64MultiArray, timeout=5)
+		rospy.wait_for_message('/IMU',Float32MultiArray, timeout=5)
     
 
     
@@ -31,8 +35,12 @@ class gps_tester():
 		self.olat = lat
 		self.olon = lon
 
-	def gps_callback(self, data):
-		lat, lon = data.latitude, data.longitude
+	# def gps_callback(self, data):
+	# 	lat, lon = data.latitude, data.longitude
+	# 	y, x = gc.ll2xy(lat,lon,self.olat,self.olon)
+	# 	self.update_pose(x, -y)
+	def gps_callback(self, msg):
+		lat, lon = msg.data
 		y, x = gc.ll2xy(lat,lon,self.olat,self.olon)
 		self.update_pose(x, -y)
 
@@ -41,8 +49,10 @@ class gps_tester():
 	def gps2xy(self, lat, lon):
 		return gc.ll2xy(lat,lon,self.olat,self.olon)
 
-	def imu_callback(self, data):
-		self.q = data.orientation
+	# def imu_callback(self, data):
+	# 	self.q = data.orientation
+	def imu_callback(self, msg):
+		self.q = msg.data #TODO
 
 	def update_pose(self, x, y):
 		for m in self.marker_array.markers:
