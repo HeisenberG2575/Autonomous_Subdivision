@@ -3,16 +3,20 @@
 import rospy
 import rospkg
 import numpy as np
+from numpy.linalg import norm
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Point, Quaternion, PoseStamped, Pose
+from tf.transformations import quaternion_multiply
 from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import Image, LaserScan
 from tf import transformations
 import tf
 from nav_msgs.msg import OccupancyGrid
 from cv_bridge import CvBridge
+import geonav_transform.geonav_conversions as gc
+from process_ar_tags import *
 import cv2
 
 path = rospkg.RosPack().get_path("motion_plan")
@@ -30,9 +34,12 @@ class client():
             #wait for the action server to come up
             while(not self.ac.wait_for_server(rospy.Duration.from_sec(2.0)) and not rospy.is_shutdown()):
                   rospy.loginfo("Waiting for the move_base action server to come up")
+
             self.listener = tf.TransformListener()
             self.listener.waitForTransform("map", ROOT_LINK, rospy.Time(0), rospy.Duration(10.0))
             self.mapData = OccupancyGrid()
+            self.olat, self.olon = 19.13079235, 72.91834925#49.8999997, 8.90000001
+
             rospy.Subscriber('/map', OccupancyGrid, self.mapCallBack)
             rospy.wait_for_message('/mrt/camera1/image_raw',Image, timeout=5)
             rospy.Subscriber('/mrt/camera1/image_raw', Image, self.cam_callback)
@@ -45,6 +52,12 @@ class client():
             self.completed_list = []
             rospy.Rate(5).sleep()#
             #rospy.spin()
+
+      def xy2gps(self, x, y):
+            return gc.xy2ll(x,y,self.olat,self.olon)
+
+      def gps2xy(self, lat, lon):
+            return gc.ll2xy(lat,lon,self.olat,self.olon)
 
       def mapCallBack(self, data):
             self.mapData=data
@@ -74,6 +87,7 @@ class client():
             #relative to the bot location
             #quaternion is a 4-tuple/list-x,y,z,w or Quaternion
             goal = MoveBaseGoal()
+            rospy.loginfo("send goal")
 
             if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
@@ -88,6 +102,10 @@ class client():
             rospy.loginfo("Sending goal location - ["+ str(xGoal)+', '+str(yGoal)+"] ..")
             self.add_arrow(xGoal, yGoal, q)
             self.ac.send_goal(goal)
+      
+      def send_goal_gps(self, Lat, Lon, q = None, frame = "map"):
+            x, y = self.gps2xy(Lat, Lon)
+            self.send_goal(x, y, q, frame)
 
       def move_to_goal(self, xGoal,yGoal, q=None, frame="map"):#frame=ROOT_LINK
             self.send_goal(xGoal,yGoal, q, frame)
@@ -101,31 +119,49 @@ class client():
             else:
                   rospy.loginfo("The robot failed to reach the destination")
                   return False
+      
+      def move_to_goal_gps(self, Lat, Lon, q = None, frame = "map"):
+            x, y = self.gps2xy(Lat, Lon)
+            return self.move_to_goal(x, y, q, frame)
 
-      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):#frame=ROOT_LINK#TODO: map frame case
+      def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):
+            return self.move_to_goal(*self.find_off_goal(xGoal,yGoal, q=q, frame=frame, offset=(0,off_dist,0,0)), frame=frame)
+
+      def move_to_off_goal_gps(self, Lat, Lon, q=None, frame="map", off_dist=1.5):
+            x, y = self.gps2xy(Lat, Lon)
+            rospy.loginfo("off goal"+str(x)+str(y))
+            return self.move_to_goal(*self.find_off_goal(x,y, q=q, frame=frame, offset=(0,off_dist,0,0)), frame=frame)
+
+      def find_off_goal(self, xGoal,yGoal, q=None, frame="map", offset=(0,0,0,0)):
+            rospy.loginfo("find off goal")
             if frame == ROOT_LINK:
                   xGoal,yGoal,q = self.bot_to_map(xGoal,yGoal,q)
                   frame = "map"
             q = uncast_quaternion(q)
             x0,y0,_ = self.bot_to_map(0,0,(0,0,0,1))#Bot location in map
-            offset = transformations.quaternion_multiply(q, (0,off_dist,0,0))
-            offset = transformations.quaternion_multiply(offset, transformations.quaternion_inverse(q))
+            offset = quaternion_multiply(q, offset)
+            offset = quaternion_multiply(offset, transformations.quaternion_inverse(q))
             x1, y1 = xGoal+offset[0],yGoal+offset[1]
             cell1=get_cell_status(self.mapData, [x1, y1])
             x2, y2 = xGoal-offset[0],yGoal-offset[1]
             cell2=get_cell_status(self.mapData, [x2, y2])
             if cell1==0:
                   if cell2==0:
-                        x,y  = [x1,y1] if ((x1-x0)**2+(y1-y0)**2 < (x2-x0)**2+(y2-y0)**2) else [x2,y2]
+                        x,y  = [x1,y1] if (norm([x1-x0, y1-y0]) < norm([x2-x0, y2-y0])) else [x2,y2]
                   else:
                         x,y = x1,y1
             else:
                   if cell2==0:
                         x,y = x2,y2
                   else:
-                        x,y  = [x1, y1] if ((x1-x0)**2+(y1-y0)**2 < (x2-x0)**2+(y2-y0)**2) else [x2,y2]
-            rospy.loginfo(str(["x1",x1,"y1",y1,":",cell1,", x2",x2,"y2",y2,":",cell2]))
-            return self.move_to_goal(x,y,q, frame)
+                        x,y  = [x1, y1] if (norm([x1-x0, y1-y0]) < norm([x2-x0, y2-y0])) else [x2,y2]
+            # rospy.loginfo(str(["x1",x1,"y1",y1,":",cell1,", x2",x2,"y2",y2,":",cell2]))
+            return x,y,q
+
+      def find_off_goal_gps(self, Lat, Lon, q = None, frame = "map"):
+            x, y = self.gps2xy(Lat, Lon)
+            return self.find_off_goal(x, y, q, frame)
+             
 
       def add_to_completed(self, pos_x, pos_y,q):
             self.completed_list.append([pos_x,pos_y,q])
@@ -171,6 +207,8 @@ class client():
             # Convert ROS Image message to OpenCV image
             current_frame = br.imgmsg_to_cv2(data)
             self.frame = current_frame
+
+
 
       def arrow_detect(self):
             #Arrow detection

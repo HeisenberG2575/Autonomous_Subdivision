@@ -13,7 +13,7 @@ class gps_tester():
 		rospy.init_node('gps_test_node')
 		rospy.loginfo('gps_test_node init')
 		self.olat, self.olon = 19.13079235, 72.91834925#49.8999997, 8.90000001
-		self.q = Quaternion()
+		self.q = Quaternion(0,0,0,1)
 		self.br = tf2_ros.TransformBroadcaster()
 		self.marker_array = MarkerArray()
 		self.marker_count = 1
@@ -38,6 +38,7 @@ class gps_tester():
 
 	def xy2gps(self, x, y):
 		return gc.xy2ll(x,y,self.olat,self.olon)
+
 	def gps2xy(self, lat, lon):
 		return gc.ll2xy(lat,lon,self.olat,self.olon)
 
