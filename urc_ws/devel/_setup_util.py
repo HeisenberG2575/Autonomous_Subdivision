@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
         if not args.local:
             # environment at generation time
-            CMAKE_PREFIX_PATH = r'/home/panda/cartographer_ws/devel_isolated/cartographer_rviz;/home/panda/cartographer_ws/install_isolated;/opt/ros/melodic'.split(';')
+            CMAKE_PREFIX_PATH = r'/home/khush/cartographer_ws/devel_isolated/cartographer_rviz;/home/khush/cartographer_ws/install_isolated;/opt/ros/melodic'.split(';')
         else:
             # don't consider any other prefix path than this one
             CMAKE_PREFIX_PATH = []

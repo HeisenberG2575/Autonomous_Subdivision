@@ -5,7 +5,7 @@ from std_msgs.msg import Float32MultiArray, Float64MultiArray
 from sensor_msgs.msg import NavSatFix, Imu, NavSatStatus
 from geometry_msgs.msg import Quaternion, Vector3
 from tf.transformations import quaternion_from_euler
-ROOT_LINK = "link_chassis"
+ROOT_LINK = "root_link"
 
 class sensor_data_pub():
     def __init__(self):

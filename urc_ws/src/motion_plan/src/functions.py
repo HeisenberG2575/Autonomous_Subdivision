@@ -21,7 +21,7 @@ import cv2
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
-ROOT_LINK = "link_chassis"
+ROOT_LINK = "root_link"
 CALIB_MTX = np.array([[1.01496820e+03, 0.00000000e+00, 2.97246399e+02],
  [0.00000000e+00, 1.03049834e+03, 1.74905232e+02],
  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])

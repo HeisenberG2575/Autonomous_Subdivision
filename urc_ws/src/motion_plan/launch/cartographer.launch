@@ -15,7 +15,7 @@
 <launch>
   <arg name="scan_topic"  default="/mrt/laser/scan"/>
   <arg name="configuration_basename" default="cartographer_params.lua"/>
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(find bot_description)/urdf/bot.xacro'"/>
+  <param name="robot_description" command="$(find xacro)/xacro '$(find bot_description)/urdf/rover.urdf'"/>
 
   <!-- send fake joint values -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">

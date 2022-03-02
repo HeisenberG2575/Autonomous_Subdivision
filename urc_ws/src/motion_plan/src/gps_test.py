@@ -7,6 +7,7 @@ import geonav_transform.geonav_conversions as gc
 from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Point, Quaternion, TransformStamped, Pose
 from visualization_msgs.msg import Marker, MarkerArray
+ROOT_LINK = "root_link"
 
 class gps_tester():
 	def __init__(self):
@@ -54,7 +55,7 @@ class gps_tester():
 
 				t.header.stamp = rospy.Time.now()
 				t.header.frame_id = "map"
-				t.child_frame_id = "link_chassis"
+				t.child_frame_id = ROOT_LINK
 				t.transform.translation = Point(x, y, 0)
 				t.transform.rotation = self.q
 				self.br.sendTransform(t)

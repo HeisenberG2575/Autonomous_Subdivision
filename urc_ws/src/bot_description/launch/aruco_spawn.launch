@@ -16,7 +16,7 @@
     <!-- more default parameters can be changed here -->
   </include>
 
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(find bot_description)/urdf/bot.xacro'"/>
+  <param name="robot_description" command="$(find xacro)/xacro '$(find bot_description)/urdf/rover.urdf'"/>
 
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>

@@ -1,7 +1,7 @@
 obstacle_range: 5.0
 raytrace_range: 5.5
 
-footprint: [[-0.15, -0.15], [-0.15, 0.15], [0.31, 0.15], [0.31, -0.15]]
+footprint: [[-0.75, -0.6], [-0.75, 0.6], [0.75, 0.6], [0.75, -0.6]]
 #TODO
 #robot_radius: 0.105
 
@@ -28,7 +28,7 @@ obstacle_layer:
 
   # Definition of the sensors/observation sources
   observation_sources: scan
-  scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+  scan: {sensor_frame: sensor_laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
 
 #  # Parameters of the source: laser_scan_right
 #  laser_scan_right:

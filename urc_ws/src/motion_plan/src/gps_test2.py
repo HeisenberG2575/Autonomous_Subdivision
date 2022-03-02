@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+#obsolete after imu_gps_publisher; incomplete
 import rospy
 import sys
 import tf2_ros
