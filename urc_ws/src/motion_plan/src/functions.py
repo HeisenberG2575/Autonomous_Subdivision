@@ -22,6 +22,10 @@ import cv2
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
 ROOT_LINK = "link_chassis"
+CALIB_MTX = np.array([[1.01496820e+03, 0.00000000e+00, 2.97246399e+02],
+ [0.00000000e+00, 1.03049834e+03, 1.74905232e+02],
+ [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+DIST = np.array([[ 0.20890098,  0.13254024, -0.03460789, -0.00425681,  0.81484297]])
 
 class client():
       def __init__(self):
@@ -208,7 +212,42 @@ class client():
             current_frame = br.imgmsg_to_cv2(data)
             self.frame = current_frame
 
-
+      def ar_detect(self):
+            if self.frame is None:
+                  return False, None
+            image = self.frame.copy()
+            h,  w = image.shape[:2]
+            newcameramtx, roi = cv.getOptimalNewCameraMatrix(CALIB_MTX, DIST, (w,h), 1, (w,h))
+            dst = cv.undistort(image, calib_mtx, dist, None, newcameramtx)
+            img_copy = copy.deepcopy(dst)
+            #convert to grayscale
+            gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+            # thresh = 100
+            #converting image to black and white to make the process robust
+            # im_bw = cv.threshold(gray, thresh, 255, cv.THRESH_BINARY)[1]
+            # cv.imshow("in", im_bw)
+            im_bw = gray
+            #Parameters for the detectors
+            parameters =  cv.aruco.DetectorParameters_create()
+            parameters.minMarkerPerimeterRate=0.2
+            #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
+            corners, ids, rejects = cv.aruco.detectMarkers(im_bw, dictionary, parameters=parameters)
+            # TODO(Ashwin,Harsh): Use Camera Calibration
+            #corners, ids, rejects = cv.aruco.detectMarkers(im_bw, dictionary, parameters=parameters,cameraMatrix=cameraMatrix) 
+            #drawing markers
+            img = cv.aruco.drawDetectedMarkers(img_copy, corners, ids)
+            if len(corners) > 0:
+                  #print the coordinates (Can use the returned values)
+                  corners = np.array(corners).reshape(-1,2)
+                  # theta = -(np.average(corners, axis=1)[0]/(np.shape(img)[0]) - 0.5)*45*2
+                  found = len(corners)/4
+                  theta = []
+                  for ar in range(found):
+                        centroid_x = np.mean([i[1] for i in corners])
+                        theta.append(-40 + (centroid_x*80)/width)
+                  # print("Detected: ", theta)
+                  return found, theta
+            return False, None
 
       def arrow_detect(self):
             #Arrow detection

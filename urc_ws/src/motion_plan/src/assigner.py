@@ -37,22 +37,22 @@ def gps_goals(high_res, lat, lon):
 
     else:
         # AR Tag Detection
-        found, theta, orient = my_client.arrow_detect()#theta and orient wrt forward direction, in degree
+        found, theta = my_client.arrow_detect()#theta and orient wrt forward direction, in degree
         # single post
         if found == 1:
-            posx,posy = my_client.find_obs_lidar(theta)
+            posx,posy = my_client.find_obs_lidar(theta[0])
             if posx is None:
                 rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
                 found = False
             
             else:
-                q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                 #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
                 posx, posy, q = my_client.bot_to_map(posx, posy, q)#map frame
                 #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
 
                 # move to final positions using AR Tag
-                success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1)
+                success = my_client.move_to_goal(my_client.find_off_goal(posx,posy, q = (0,0,0,1), frame = "map", offset=(1,0,0,0)))
                 if success == True:
                     # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                     # prev_x, prev_y, prev_q = posx, posy, q#map frame
@@ -73,7 +73,7 @@ def gps_goals(high_res, lat, lon):
                 found = False
             
             else:
-                q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                 #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
                 posx1, posy1, q = my_client.bot_to_map(posx1, posy1, q)#map frame
                 posx2, posy2, q = my_client.bot_to_map(posx2, posy2, q)#map frame
@@ -86,7 +86,7 @@ def gps_goals(high_res, lat, lon):
                 posx = (posx1 + posx2) / 2.0
                 posy = (posy1 + posy2) / 2.0
 
-                success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1)
+                success = my_client.move_to_goal(posx,posy, q = q, frame = "map")
                 if success == True:
                     # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                     # prev_x, prev_y, prev_q = posx, posy, q#map frame
