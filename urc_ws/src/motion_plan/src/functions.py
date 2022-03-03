@@ -229,7 +229,7 @@ class client():
             im_bw = gray
             #Parameters for the detectors
             parameters =  cv.aruco.DetectorParameters_create()
-            parameters.minMarkerPerimeterRate=0.2
+            parameters.minMarkerPerimeterRate=0.2#default: 0.05
             #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
             corners, ids, rejects = cv.aruco.detectMarkers(im_bw, dictionary, parameters=parameters)
             # TODO(Ashwin,Harsh): Use Camera Calibration

@@ -37,7 +37,7 @@ def gps_goals(high_res, lat, lon):
 
     else:
         # AR Tag Detection
-        found, theta = my_client.arrow_detect()#theta and orient wrt forward direction, in degree
+        found, theta = my_client.ar_detect()#theta and orient wrt forward direction, in degree
         # single post
         if found == 1:
             posx,posy = my_client.find_obs_lidar(theta[0])

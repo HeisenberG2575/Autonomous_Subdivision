@@ -5,7 +5,7 @@ footprint: [[-0.75, -0.6], [-0.75, 0.6], [0.75, 0.6], [0.75, -0.6]]
 #TODO
 #robot_radius: 0.105
 
-inflation_radius: 1.0
+inflation_radius: 0.5
 cost_scaling_factor: 3.0
 transform_tolerance: 1.0
 

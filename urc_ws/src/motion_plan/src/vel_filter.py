@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 class filter():
   def __init__(self):
       rospy.init_node('vel_filter', anonymous=True)
-      self.sub = rospy.Subscriber('/cmd_vel', Twist, self.callback)
+      self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.callback)
       self.pub = rospy.Publisher('/cmd_vel_filtered',Twist,queue_size=10)
       rospy.spin()
       
