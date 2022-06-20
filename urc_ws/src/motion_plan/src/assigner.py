@@ -22,9 +22,9 @@ def main_node():
     #print(x,y,q)
     i=1 #iteration for moving just ahead of the previous goal
 
-    gps_goal_lat,gps_goal_lon = my_client.xy2gps(2,0)
-    gps_goals(True, gps_goal_lat, gps_goal_lon)
-    gps_goal_lat,gps_goal_lon = my_client.xy2gps(4,0)
+    gps_goal_lat,gps_goal_lon = my_client.xy2gps(0,8)
+    gps_goals(False, gps_goal_lat, gps_goal_lon)
+    gps_goal_lat,gps_goal_lon = my_client.xy2gps(-10,-3)
     gps_goals(False, gps_goal_lat, gps_goal_lon)
 
 def gps_goals(high_res, lat, lon):
@@ -36,71 +36,76 @@ def gps_goals(high_res, lat, lon):
             rospy.loginfo("Failed")
 
     else:
-        # AR Tag Detection
-        found, theta = my_client.ar_detect()#theta and orient wrt forward direction, in degree
-        # single post
-        if found == 1:
-            posx,posy = my_client.find_obs_lidar(theta[0])
-            if posx is None:
-                rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
-                found = False
-            
-            else:
-                q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
-                #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
-                posx, posy, q = my_client.bot_to_map(posx, posy, q)#map frame
-                #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
-
-                # move to final positions using AR Tag
-                success = my_client.move_to_goal(my_client.find_off_goal(posx,posy, q = (0,0,0,1), frame = "map", offset=(1,0,0,0)))
-                if success == True:
-                    # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
-                    # prev_x, prev_y, prev_q = posx, posy, q#map frame
-                    #my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
-                    # my_client.add_to_completed(posx, posy, q)
-                    rospy.loginfo("Reached Post")
-                    # Flash Green LED
+        while not rospy.is_shutdown():
+            # AR Tag Detection
+            found, theta = my_client.ar_detect()#theta and orient wrt forward direction, in degree
+            # single post
+            if found == 1:
+                posx,posy = my_client.find_obs_lidar(theta[0])
+                if posx is None:
+                    rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
+                    found = False
+                
                 else:
-                    rospy.loginfo("Failed goal: " + str((posx, posy, q)))
-        
-        elif found == 2:
-            # Gate post
-            rospy.loginfo("Gate Post Traversal")
-            posx1,posy1 = my_client.find_obs_lidar(theta[0])                
-            posx2,posy2 = my_client.find_obs_lidar(theta[1])
-            if posx1 is None or posx2 is None:
-                rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
-                found = False
+                    q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                    #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
+                    posx, posy, q = my_client.bot_to_map(posx, posy, q)#map frame
+                    #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
+
+                    # move to final positions using AR Tag
+                    success = my_client.move_to_goal(my_client.find_off_goal(posx,posy, q = (0,0,0,1), frame = "map", offset=(1,0,0,0)))
+                    if success == True:
+                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
+                        # prev_x, prev_y, prev_q = posx, posy, q#map frame
+                        #my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
+                        # my_client.add_to_completed(posx, posy, q)
+                        rospy.loginfo("Reached Post")
+                        # Flash Green LED
+                        return True
+                    else:
+                        rospy.loginfo("Failed goal: " + str((posx, posy, q)))
+                        return False#TODO
             
-            else:
-                q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
-                #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
-                posx1, posy1, q = my_client.bot_to_map(posx1, posy1, q)#map frame
-                posx2, posy2, q = my_client.bot_to_map(posx2, posy2, q)#map frame
-
-                assert abs(norm([posx1 - posx2, posy1 - posy2]) - 2) <= 0.5
-
-                #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
-
-                # move to final positions using AR Tag
-                posx = (posx1 + posx2) / 2.0
-                posy = (posy1 + posy2) / 2.0
-
-                success = my_client.move_to_goal(posx,posy, q = q, frame = "map")
-                if success == True:
-                    # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
-                    # prev_x, prev_y, prev_q = posx, posy, q#map frame
-                    #my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
-                    # my_client.add_to_completed(posx, posy, q)
-                    rospy.loginfo("Reached Post")
-                    # Flash Green LED
+            elif found == 2:
+                # Gate post
+                rospy.loginfo("Gate Post Traversal")
+                posx1,posy1 = my_client.find_obs_lidar(theta[0])                
+                posx2,posy2 = my_client.find_obs_lidar(theta[1])
+                if posx1 is None or posx2 is None:
+                    rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
+                    found = False
+                
                 else:
-                    rospy.loginfo("Failed goal: " + str((posx, posy, q)))
+                    q=(0,0,0,1)#(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                    #TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
+                    posx1, posy1, q = my_client.bot_to_map(posx1, posy1, q)#map frame
+                    posx2, posy2, q = my_client.bot_to_map(posx2, posy2, q)#map frame
+
+                    assert abs(norm([posx1 - posx2, posy1 - posy2]) - 2) <= 0.5
+
+                    #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
+
+                    # move to final positions using AR Tag
+                    posx = (posx1 + posx2) / 2.0
+                    posy = (posy1 + posy2) / 2.0
+
+                    success = my_client.move_to_goal(posx,posy, q = q, frame = "map")
+                    if success == True:
+                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
+                        # prev_x, prev_y, prev_q = posx, posy, q#map frame
+                        #my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
+                        # my_client.add_to_completed(posx, posy, q)
+                        rospy.loginfo("Reached Post")
+                        return True
+                        # Flash Green LED
+                    else:
+                        rospy.loginfo("Failed goal: " + str((posx, posy, q)))
+                        return False
 
 
-        else:
-            my_client.send_goal_gps(gps_goal_lat, gps_goal_lon,frame="map")
-            rospy.sleep(1)#Sleep for 1-2s and let the bot move towards the goal
+            else:
+                my_client.send_goal_gps(lat, lon,frame="map")
+                rospy.sleep(1)#Sleep for 1-2s and let the bot move towards the goal
 
     # while not rospy.is_shutdown():
     #     if len(my_client.completed_list) == 5:

@@ -170,6 +170,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
    src/image_sub.py
+   src/image_pub.py
    src/functions.py
    src/arrow_detect_test.py
    src/assigner.py

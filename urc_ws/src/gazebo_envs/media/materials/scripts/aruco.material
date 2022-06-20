@@ -9,9 +9,80 @@ material aruco/standard
 
       texture_unit
       {
-        texture ../textures/aruco.jpeg
+        texture ../textures/aruco0.jpg
         scale 1 1
       }
     }
   }
 }
+material aruco/standard1
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco1.jpg
+        scale 1 1
+      }
+    }
+  }
+}
+
+material aruco/standard2
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco2.jpg
+        scale 1 1
+      }
+    }
+  }
+}
+
+material aruco/standard3
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco3.jpg
+        scale 1 1
+      }
+    }
+  }
+}
+material aruco/standard4
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/aruco4.jpg
+        scale 1 1
+      }
+    }
+  }
+}
+

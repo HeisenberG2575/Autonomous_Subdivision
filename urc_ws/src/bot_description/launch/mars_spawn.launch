@@ -5,7 +5,7 @@
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <env name="GAZEBO_MODEL_PATH" value="$(find bot_description)/urdf"/>
     <env name="GAZEBO_RESOURCE_PATH" value="$(find gazebo_envs)/media/materials"/>
-    <arg name="world_name" value="$(find gazebo_envs)/worlds/mars_easy.world"/>
+    <arg name="world_name" value="$(find gazebo_envs)/worlds/urc.world"/>
     <!-- more default parameters can be changed here -->
   </include>
 

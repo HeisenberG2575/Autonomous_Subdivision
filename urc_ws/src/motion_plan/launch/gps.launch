@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 
-  <param name="robot_description" command="$(find xacro)/xacro '$(find bot_description)/urdf/bot.xacro'"/>
+  <param name="robot_description" command="$(find xacro)/xacro '$(find bot_description)/urdf/rover.urdf'"/>
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="use_gui" value="False"/>

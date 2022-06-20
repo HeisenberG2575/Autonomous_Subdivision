@@ -4,7 +4,7 @@ import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
-
+import os, re
 DEFAULT_CAMERA_NAME = '/dev/v4l/by-id/usb-046d_C270_HD_WEBCAM_EA2B8C60-video-index0'
 
 device_num = 0
@@ -23,9 +23,9 @@ class ImagePublisher():
       self.vid = cv2.VideoCapture(video_capture_path)
     else:
       self.vid = cv2.VideoCapture(device_num)
-    rate = rospy.Rate(10)
-    self.br = CvBridge()  
     rospy.init_node("ip_image_pub", anonymous=True)
+    self.br = CvBridge()  
+    rate = rospy.Rate(10)
     self.pub = rospy.Publisher('/mrt/camera1/image_raw', Image)
     while not rospy.is_shutdown():
         ret, frame = self.vid.read()

@@ -26,6 +26,7 @@ CALIB_MTX = np.array([[1.01496820e+03, 0.00000000e+00, 2.97246399e+02],
  [0.00000000e+00, 1.03049834e+03, 1.74905232e+02],
  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
 DIST = np.array([[ 0.20890098,  0.13254024, -0.03460789, -0.00425681,  0.81484297]])
+DICTIONARY = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
 
 class client():
       def __init__(self):
@@ -217,25 +218,25 @@ class client():
                   return False, None
             image = self.frame.copy()
             h,  w = image.shape[:2]
-            newcameramtx, roi = cv.getOptimalNewCameraMatrix(CALIB_MTX, DIST, (w,h), 1, (w,h))
-            dst = cv.undistort(image, calib_mtx, dist, None, newcameramtx)
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CALIB_MTX, DIST, (w,h), 1, (w,h))
+            dst = cv2.undistort(image, CALIB_MTX, DIST, None, newcameramtx)
             img_copy = copy.deepcopy(dst)
             #convert to grayscale
-            gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             # thresh = 100
             #converting image to black and white to make the process robust
-            # im_bw = cv.threshold(gray, thresh, 255, cv.THRESH_BINARY)[1]
-            # cv.imshow("in", im_bw)
+            # im_bw = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY)[1]
+            # cv2.imshow("in", im_bw)
             im_bw = gray
             #Parameters for the detectors
-            parameters =  cv.aruco.DetectorParameters_create()
+            parameters =  cv2.aruco.DetectorParameters_create()
             parameters.minMarkerPerimeterRate=0.2#default: 0.05
             #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
-            corners, ids, rejects = cv.aruco.detectMarkers(im_bw, dictionary, parameters=parameters)
+            corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters)
             # TODO(Ashwin,Harsh): Use Camera Calibration
-            #corners, ids, rejects = cv.aruco.detectMarkers(im_bw, dictionary, parameters=parameters,cameraMatrix=cameraMatrix) 
+            #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix) 
             #drawing markers
-            img = cv.aruco.drawDetectedMarkers(img_copy, corners, ids)
+            img = cv2.aruco.drawDetectedMarkers(img_copy, corners, ids)
             if len(corners) > 0:
                   #print the coordinates (Can use the returned values)
                   corners = np.array(corners).reshape(-1,2)
