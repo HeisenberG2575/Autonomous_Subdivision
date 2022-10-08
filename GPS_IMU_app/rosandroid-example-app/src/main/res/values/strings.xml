@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_name">LPS Helper App</string>
-    <string name="ros_introduction">Do \'rostopic echo LPS\', \'rostopic echo LatLon\' and \'rostopic echo IMU\' to get the values! If you see these topics (LPS, LatLon and IMU) in rostopic list but they are not being echoed, restart the app with proper ROS_IP </string>
-</resources>

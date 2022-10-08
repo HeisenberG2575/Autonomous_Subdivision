@@ -1,18 +1,8 @@
-docsevel/
 logs/
 build/
+devel/
 bin/
 lib/
-msg_gen/
-srv_gen/
-msg/*Action.msg
-msg/*ActionFeedback.msg
-msg/*ActionGoal.msg
-msg/*ActionResult.msg
-msg/*Feedback.msg
-msg/*Goal.msg
-msg/*Result.msg
-msg/_*.py
 build_isolated/
 devel_isolated/
 
@@ -37,6 +27,11 @@ srv/_*.py
 *.pyc
 qtcreator-*
 *.user
+**/__pycache__/
+**/.ropeproject
+.catkin_tools/
+.catkin_workspace
+.vscode/
 
 /planning/cfg
 /planning/docs

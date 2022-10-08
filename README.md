@@ -1,79 +1,32 @@
-# Autonomous Subsystems, IIT-B Mars Rover Team
-The repository for autonomous subsystems codes for Mars Rover Project, IIT-Bombay
+# MRT
 
-## Repository contents 
+This workspace contains a gazebo environment and a bot which can be used for testing path planning algorithms. All of this has been tested and built on ROS melodic 
 
-* [GPS_IMU_app](./GPS_IMU_app): Contains code for android app made to publish GPS and IMU sensor readings of an android phone(should have a magnetometer) as rostopics `\LatLon` and `\IMU`
-* [Mobility Workspace](./mobility_ws): Contains code for closed loop steer of rover for level 3 autonomous implementation
-* [Steer-Drive Switch](./steer_drive_switch.py): **Python2.7** code for shifting between steer and drive modes
-* [Ball_Detection](./Ball_Detection): Contains code for ball detection. Also has weights for supervised ball detection
----
-## Idetified work points
+## To use this on your system, you must have the following:
+- ROS
+- Gazebo
+- Various dependencies of ROS such as Rviz, Robot State Publisher. (if you have installed full desktop version of ROS, you already have them by default)
 
-- [x] Ball detection using GMM
-- [ ] Ball detection using CNN (in correspondence with Vito)
-- [ ] Illumination correction
-- [ ] Stereo_image_proc ros package testing
-- [ ] GUI integration with python
+## To run the files on your system:
+1. Clone the workspace.
+2. Open terminal and move to the repo and run `catkin_make` and `source devel/setup.bash`
+3. To open environment in gazebo run command `roslaunch bot_description spawn.launch`
+4. To see the laser scan markings in rviz:
+- Open a new terminal and run `roslaunch bot_description rviz.launch`. A RviZ window pops up after this, then make the foll changes
+- In the toolbar on left, change **Fixed Frame** to odom
+- On the bottom left, click on the `Add` button, and select RobotModel, you should be able to see the bot in RviZ now.
+- Similarly, add the laserscan by adding LaserScan after clicking on `Add` button. 
+- Change the topic under laser scan to /mrt/laser/scan and you should see some more parameters under the laserscan now.
+5. To move the bot manually and see the RviZ markings change, in a new tab run command `rosrun teleop_twist_keyboard teleop_twist_keyboard.py` and navigate as commanded.
+6. To know how to take readings from laser scanner into the code. See file reading_lidar.py inside the motion_plan package. To run this file, run command `rosrun motion_plan reading_lidar.py`
 
----
-## Laserscan parameters for kinect2
+## Preventing Common Errors:
+- run command `source devel/setup.bash` everytime you open a new terminal
+- If while running the spawn.launch file you see errors on the terminal, google them most of them are missing dependency errors.
+- If spawn.launch doesn't open gazebo and the terminal shows 'Waiting for services...', then open 2 new terminals and run `roscore` and `rosrun gazebo_ros gazebo`. This should work
 
-Use `iai_kinect2` package to obtain depth map. Then, use `depthimage_to_laserscan` package to convert depth image to laserscan. We obtained the following parameters in the laser scan message.
-
-* Scanning range `-0.6 radians to 0.6 radians`, `0.45 meters to 10 meters`
-* Scanning precision (increment angle) `0.0024 radians (0.14 degrees)`
-* Time between scans `0.033 seconds`
-
-Scan creates a polar map which indicates the obstacles in the 2d plane of the sensor. Obstacles are indicated by `range and theta`.
-
-After connecting Kinect2, run -
-```
-roslaunch kinect2_bridge kinect2_bridge.launch
-rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/kinect2/sd/image_depth
-roslaunch obstacle_detector obstacle_detec.launch
-rviz
-```  
----
-
-## YDLIDAR ROS package
-
-ROS node and test application for YDLIDAR.
-
-Scan creates a polar map which indicates the obstacles in the 2d plane of the sensor. Obstacles are indicated by `range and theta`.
-
-### Procedure for installation
-
-1) Run `source /opt/ros/melodic/setup.bash` in any directory to make it a catkin workspace
-2) Clone [this](https://github.com/EAIBOT/ydlidar.git) project to your catkin's workspace src folder
-3) Run `catkin_make` to build ydlidar_node and ydlidar_client
-4) Run these commands -
-
-```
-roscd ydlidar/startup
-sudo chmod 777 ./*
-`sudo sh initenv.sh
-```
-
-After connecting ydlidar -
-
-a) To view output in rviz : 
-
-`roslaunch ydlidar lidar_view.launch`
-
-**OR**
-
-b) To view output in terminal :
-
-`roslaunch ydlidar lidar.launch`
-
-Open another terminal, Run : 
-
-```
-source devel/setup.bash
-rosrun ydlidar ydlidar_client
-``` 
-
-### Checking Port number
-
-Run `ls /dev/ > dev_list_1.txt` , connect YDLidar and then run `ls /dev/ | diff --suppress-common-lines -y - dev_list_1.txt`
+## File Structure: This workspace has 4 packages.
+- **motion_plan** : has the script for lidar reading
+- **gazebo_envs** : has the files for various gazebo envs
+- **bot_description** : has the files for bot and it's gazebo plugins.
+- **teleop** : to enable manual navigation
