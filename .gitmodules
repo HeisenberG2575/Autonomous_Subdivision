@@ -1,0 +1,3 @@
+[submodule "src/bot_description"]
+	path = src/bot_description
+	url = git@github.com:iitbmartian/bot_description.git
