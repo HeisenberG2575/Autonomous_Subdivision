@@ -1,0 +1,14 @@
+
+<launch>
+    <arg name="realsense" default="0"/>
+    <arg name="zed2" default="0"/>
+    <arg name="lidar" default="0"/>
+    <include file="$(find motion_plan)/launch/rtabmap_realsense.launch" if=$(arg realsense)/>
+    <include file="$(find motion_plan)/launch/lidar.launch" if=$(arg lidar)/>
+    <include file="$(find motion_plan)/launch/rtabmap_zed2.launch" if=$(arg zed2)/>
+    <include file="$(find motion_plan)/launch/move_base.launch"/>
+    <node name="assigner" pkg="motion_plan" type="assigner.py"/>
+ <node name="odom_pub" pkg="motion_plan" type="odom_pub.py"/>
+ <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py"/>
+</launch>
+

@@ -15,7 +15,7 @@ ROOT_LINK = "root_link"
 #       self.sub = rospy.Subscriber('/wheel_output', Twist, self.callback)
 #       self.pub = rospy.Publisher('/odom',Float32MultiArray,queue_size=10)
 #       rospy.spin()
-      
+
 #   def callback(self, msg):
 #       array = np.array(msg.data)
 #       array = np.min(array, 10)#ig sometimes odom values are wildly inaccurate, i saw a similar condition somewhere.. remove if useless

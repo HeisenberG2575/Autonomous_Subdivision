@@ -12,7 +12,7 @@ class motor_cmd():
       self.sub = rospy.Subscriber('/cmd_vel_filtered', Twist, self.callback)
       self.pub = rospy.Publisher('/motor_cmd',Float32MultiArray,queue_size=10)
       rospy.spin()
-      
+
   def callback(self, data):
       global radius
       array = np.zeros(4)#first two for right side, other two for left side
@@ -21,7 +21,7 @@ class motor_cmd():
       array[2] = data.linear.x - data.angular.z*radius
       array[3] = data.linear.x - data.angular.z*radius
       self.pub.publish(Float32MultiArray(data=array))
-      
+
 if __name__ == '__main__':
       try:
             my_motor_cmd = motor_cmd()

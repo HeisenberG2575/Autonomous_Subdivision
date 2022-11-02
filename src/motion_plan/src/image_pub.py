@@ -33,6 +33,6 @@ class ImagePublisher():
         ros_img = self.br.cv2_to_imgmsg(frame)
         self.pub.publish(ros_img)
         rate.sleep()
-        
+
 if __name__ == "__main__":
     x = ImagePublisher()

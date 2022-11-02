@@ -1,0 +1,17 @@
+material chess/standard
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/chess.jpg
+        scale 1 1
+      }
+    }
+  }
+}

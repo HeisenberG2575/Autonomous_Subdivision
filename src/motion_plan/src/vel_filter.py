@@ -2,25 +2,34 @@
 
 import rospy
 from geometry_msgs.msg import Twist
+from rover_msgs.msg import drive_msg
 
+MAX_LINEAR = 0.3
+MAX_ANGULAR = 0.3
 
 class filter():
-  def __init__(self):
-      rospy.init_node('vel_filter', anonymous=True)
-      self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.callback)
-      self.pub = rospy.Publisher('/cmd_vel_filtered',Twist,queue_size=10)
-      rospy.spin()
-      
-  def callback(self, data):
-      new_vel = Twist()
-      if abs(data.angular.z) > 0.2 or abs(data.linear.x)<abs(data.angular.z):
-        new_vel.angular.z = data.angular.z
-      else :
-        new_vel.linear.x = data.linear.x
-      self.pub.publish(new_vel)
-      
+    """Filters velocity and publishes drive_msg"""
+    def __init__(self):
+        rospy.init_node('vel_filter', anonymous=True)
+        self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.callback)
+        self.pub = rospy.Publisher('/drive_msg',drive_msg,queue_size=10)
+        rospy.spin()
+
+    def callback(self, data):
+        drive = drive_msg()
+        drive.mode = "autonomous"
+        data.angular.z = max(data.angular.z, MAX_ANGULAR)
+        data.linear.z = max(data.linear.z, MAX_LINEAR)
+        if abs(data.angular.z) > 0.1 or abs(data.linear.x)<abs(data.angular.z):
+            drive.direction = "anticlockwise" if data.angular.z>0 else "clockwise"
+            drive.speed = 127*abs(data.angular.z)/MAX_ANGULAR
+        else :
+            drive.direction = "forward" if data.linear.x>0 else "backward"
+            drive.speed = 127*abs(data.linear.x)/MAX_LINEAR
+        self.pub.publish(drive)
+
 if __name__ == '__main__':
-      try:
-            my_filter = filter()
-      except rospy.ROSInterruptException:
-            print("Closing vel_filter")
+    try:
+        my_filter = filter()
+    except rospy.ROSInterruptException:
+        print("Closing vel_filter")

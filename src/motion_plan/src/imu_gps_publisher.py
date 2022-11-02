@@ -38,7 +38,6 @@ class sensor_data_pub():
         self.acc = Vector3(*data.data)
         # self.publish_imu()
         # rospy.loginfo("I heard"+str(data.data))
-        
         # rospy.loginfo("The acceleration representation is %s %s %s." % (acc[0], acc[1], acc[2]))
 
     def callback_Omega(self, data):
@@ -67,7 +66,7 @@ class sensor_data_pub():
         self.imu = Imu()
         self.imu.header.frame_id = "imu_link"
         self.imu.header.stamp = rospy.Time.now() + rospy.Duration(nsecs=1e8)
-        
+
         self.imu.orientation = self.q
         self.imu.orientation_covariance = [ 2.55441508e-08,   8.39203826e-09,  -5.98954506e-08,  
                             8.39203826e-09,   2.71482299e-08,   2.95416336e-08,

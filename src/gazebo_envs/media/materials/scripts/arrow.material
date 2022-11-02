@@ -1,0 +1,34 @@
+material arrow/standard
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/arrow.jpeg
+        scale 1 1
+      }
+    }
+  }
+}
+material arrow/standard_opp
+{
+  receive_shadows off
+
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture ../textures/arrow_opp.jpeg
+        scale 1 1
+      }
+    }
+  }
+}
