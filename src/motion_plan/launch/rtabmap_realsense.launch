@@ -60,7 +60,7 @@
    
   <!-- RGB-D related topics -->
   <arg name="rgb_topic"               default="/realsense/color/image_raw" />
-  <arg name="depth_topic"             default="/realsense/depth/color/points" />
+  <arg name="depth_topic"             default="/realsense/depth/image_rect_raw" />
   <arg name="camera_info_topic"       default="/realsense/color/camera_info" />
   <arg name="depth_camera_info_topic" default="/realsense/depth/camera_info" />
   
@@ -103,7 +103,7 @@
   <arg name="visual_odometry"          default="false"/>          <!-- Launch rtabmap visual odometry node -->
   <arg name="icp_odometry"             default="false"/>         <!-- Launch rtabmap icp odometry node -->
   <arg name="odom_topic"               default="vo_odom"/>          <!-- Odometry topic name /gazebo/controllers/diff_drive/odom or /realsense/odom-->
-  <arg name="slam_odom_topic"          default="/odometry/filtered"/> <!-- Odometry topic name for slam /rtabmap/odom/filtered-->
+  <arg name="slam_odom_topic"          default="/odom"/> <!-- Odometry topic name for slam /rtabmap/odom/filtered-->
   <arg name="vo_frame_id"              default="odom"/> <!-- Visual/Icp odometry frame ID for TF , initially odom topic-->
   <arg name="publish_tf_odom"          default="false"/>
   <arg name="odom_tf_angular_variance" default="1"/>             <!-- If TF is used to get odometry, this is the default angular variance -->
