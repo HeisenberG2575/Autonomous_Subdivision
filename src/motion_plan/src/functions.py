@@ -63,11 +63,12 @@ class client():
       def mapCallBack(self, data):
             self.mapData=data
 
-      def bot_to_map(self, pos_x, pos_y, q):
+      # TODO change to ps, q format for all
+      def bot_to_map(self, pos_x, pos_y, q, frame=ROOT_LINK):
             ps = PoseStamped()
 
             #set up the frame parameters
-            ps.header.frame_id = ROOT_LINK
+            ps.header.frame_id = frame
             ps.header.stamp = rospy.Time.now()
 
             ps.pose.position = Point(pos_x, pos_y, 0)
@@ -366,7 +367,7 @@ class client():
             #cv2.waitKey(0)
             # template = cv2.imread("arrow.jpeg")
             for cnt in contours:
-                  if cv2.contourArea(cnt) < 170:
+                  if cv2.contourArea(cnt) < 150:
                         continue
                   peri = cv2.arcLength(cnt, True)
                   approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
