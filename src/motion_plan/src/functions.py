@@ -44,7 +44,7 @@ class client():
             self.frame = None
             self.lidar_data = None
             self.pcd = None
-            rospy.Subscriber('/map', OccupancyGrid, self.mapCallBack)
+            rospy.Subscriber('/rtabmap/grid_map', OccupancyGrid, self.mapCallBack)
             rospy.Subscriber('/mrt/laser/scan', LaserScan, self.lidar_callback)
             rospy.Subscriber('/mrt/camera/color/image_raw', Image, self.cam_callback)
             rospy.wait_for_message('/mrt/camera/color/image_raw',Image, timeout=5)
@@ -172,14 +172,14 @@ class client():
 
       def recovery(self):
             rospy.loginfo("Initiating recovery")
-            found, theta, orient = self.arrow_detect()
+            found, pos, orient = self.arrow_detect()
             j = 0
             while found == False and j < 3:
                   x,y,q = self.bot_to_map(0,0, (0,0,0,1))
                   q = uncast_quaternion(q)
                   q = quaternion_multiply(q, (0,0,np.sin(0.2), np.cos(0.2)))
                   self.move_to_goal(x,y,q)
-                  found, theta, orient = self.arrow_detect()
+                  found, pos, orient = self.arrow_detect()
                   j += 1
             j = 0
             while found == False and j < 6:
@@ -187,18 +187,20 @@ class client():
                   q = uncast_quaternion(q)
                   q = quaternion_multiply(q, (0,0,np.sin(-0.2), np.cos(-0.2)))
                   self.move_to_goal(x,y,q)
-                  found, theta, orient = self.arrow_detect()
+                  found, pos, orient = self.arrow_detect()
                   j += 1
-            posx,posy = self.find_obs_lidar(theta)
-            if found == False or posx is None or self.is_complete(posx, posy):
+            orient = orient + 90 if orient < 0 else orient - 90
+            q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+            posx,posy,q = my_client.bot_to_map(pos[0], pos[1], q) #map frame
+            if found == False or pos is None or self.is_complete(posx, posy, q):
                   rospy.loginfo("Failed. Moving to last known good location")
                   self.move_to_goal(*self.last_good_location)
-                  return False, None, None, None, None
+                  return False, None, None
             else:
-                  return found, theta, orient, posx,posy
+                  return found, pos, orient
 
-      def add_arrow(self, pos_x, pos_y, q, color = (0.2,0.5,1.0)):#color = (r,g,b), in [0,1]
-            marker = make_arrow_marker(Pose(Point(pos_x, pos_y, 0), recast_quaternion(q)), self.marker_count, color)
+      def add_arrow(self, pos_x, pos_y, q, color = (0.2,0.5,1.0), pos_z = 0):#color = (r,g,b), in [0,1]
+            marker = make_arrow_marker(Pose(Point(pos_x, pos_y, pos_z), recast_quaternion(q)), self.marker_count, color)
 
             # We add the new marker to the MarkerArray, removing the oldest
             # marker from it when necessary
@@ -238,7 +240,7 @@ class client():
           pt = [el * depth for el in ray_z]  # multiply the ray by the depth; its Z-component should now equal the depth value
           # print("3D pt: ", pt)
           # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
-          assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
+          # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
           return pt
 
 
@@ -255,25 +257,36 @@ class client():
 
       def pc_callback(self, data):
             self.timestamp = data.header.stamp
-            print('pcd height: ',data.height, 'width: ', data.width )
+            # print('pcd height: ',data.height, 'width: ', data.width )
             self.roscloud = data
             self.pcd = convertCloudFromRosToOpen3d(data)
             self.pcd_width = data.width
 
-      def get_orientation(self, corners):
-            # centroid_x = np.mean([i[1] for i in corners])
+      def get_orientation(self, corners, visualize = False):
             print("corners", corners)
             pcd = self.crop_pcd(corners[:4])
             z = np.median(np.asarray(pcd.points), axis=0)[2] # get median z TODO
-            downpcd = pcd#.voxel_down_sample(voxel_size=0.05)
             # TODO add this to completed?
             # ps.append(downpcd.get_centre())
-            pcd.paint_uniform_color([1.0, 0, 0])
-            o3d.visualization.draw_geometries([pcd,self.pcd],
-                                              zoom=0.2012,
-                                              front=[-0.016, -0.22, -1.0 ],
-                                              lookat=[-0.07, 0.4, 2.3],
-                                              up=[0.0048, -1., 0.22])
+
+            if visualize == True:
+                lines = [[0,1],
+                         [1,2],
+                         [2,3]]
+                colors = [[1, 0, 0] for i in range(len(lines))]
+                line_set = o3d.geometry.LineSet(
+                    points=o3d.utility.Vector3dVector(corners),
+                    lines=o3d.utility.Vector2iVector(lines),
+                )
+                line_set.colors = o3d.utility.Vector3dVector(colors)
+                pcd.paint_uniform_color([1.0, 0, 0])
+                o3d.visualization.draw_geometries([pcd, self.pcd, line_set],
+                                                  zoom=0.1,
+                                                  front=[-0.016, -0.22, -1.0 ],
+                                                  lookat=[0.27, 0.4, 2.3],
+                                                  up=[0.0048, -1., 0.22])
+
+            # downpcd = pcd.voxel_down_sample(voxel_size=0.05)
             # theta.append(-40 + (centroid_x*80)/width)
             # downpcd.estimate_normals(
             #     search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
@@ -284,16 +297,15 @@ class client():
             #                                   up=[-0.0694, -0.9768, 0.2024],
             #                                   point_show_normal=True)
 
-            plane_model, _ = downpcd.segment_plane(distance_threshold=0.01,
+            plane_model, _ = pcd.segment_plane(distance_threshold=0.01,
                                                ransac_n=3,
                                                num_iterations=500)
             [a,b,c,d] = plane_model
             a,b,c,d = (-a,-b,-c,d) if c > 0 else (a,b,c,d)
             q = q_from_vector3D((a,b,c))
-            print(a,b,c,d)
-            print(q)
+            # print(a,b,c,d)
+            # print(q)
 
-            # print("Detected: ", theta)
             return q
 
       def crop_pcd(self, corners):
@@ -310,16 +322,16 @@ class client():
             vol = o3d.visualization.SelectionPolygonVolume()
 
             # You need to specify what axis to orient the polygon to.
-            # I choose the "Y" axis. I made the max value the maximum Y of
-            # the polygon vertices and the min value the minimum Y of the
+            # I choose the "Z" axis. I made the max value the maximum Z of
+            # the polygon vertices and the min value the minimum Z of the
             # polygon vertices.
-            vol.orthogonal_axis = "Y"
-            vol.axis_max = np.max(bounding_polygon[:, 1])+0.05
-            vol.axis_min = np.min(bounding_polygon[:, 1])-0.05
+            vol.orthogonal_axis = "Z"
+            vol.axis_max = np.max(bounding_polygon[:, 2])+0.2
+            vol.axis_min = np.min(bounding_polygon[:, 2])-0.2
 
-            # Set all the Y values to 0 (they aren't needed since we specified what they
+            # Set all the Z values to 0 (they aren't needed since we specified what they
             # should be using just vol.axis_max and vol.axis_min).
-            bounding_polygon[:, 1] = 0
+            bounding_polygon[:, 2] = 0
 
             # Convert the np.array to a Vector3dVector
             vol.bounding_polygon = o3d.utility.Vector3dVector(bounding_polygon)
@@ -345,8 +357,8 @@ class client():
             img = self.frame.copy()
             orig_img = img.copy()
             found = False
-            theta = None
             orient = None
+            pos = None
             direction = None
             bounding_box = None
             contours, _ = cv2.findContours(preprocess(img), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2:]
@@ -373,9 +385,10 @@ class client():
                               #Check that tan of angle of the arrow in the image from horizontal is less than 0.2(we are expecting nearly horizontal arrows)(atan(0.2) = 11.31)
                               if abs(float(arrow_tail[1]-arrow_tip[1])/(arrow_tail[0]-arrow_tip[0])) > 0.2:
                                   continue#Discard it, not a horizontal arrow
-                              #cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
-                              #cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre
-                              theta = -(np.average([arrow_tail[0], arrow_tip[0]])/(np.shape(img)[0]) - 0.5)*45*2#linear estimate, assuming camera horizontal range from -45 to 45
+                              ##cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
+                              ##cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre
+                              #theta = -(np.average([arrow_tail[0], arrow_tip[0]])/(np.shape(img)[0]) - 0.5)*45*2#linear estimate, assuming camera horizontal range from -45 to 45
+                              ##theta not needed using pcd
                               direction = dirct#TODO multiple arrow case
                               found = True
                               bounding_box = cv2.boundingRect(cnt)
@@ -384,66 +397,74 @@ class client():
                               cv2.circle(img, arrow_tip, 3, (0, 0, 255), cv2.FILLED)
                               print("arrow_x_img: "+str(np.average(rect, axis=0)[0] ))
 
-            if direction is not None and far == False:
-                new_img = orig_img[
-                 int(bounding_box[1])-10: int(bounding_box[1]+bounding_box[3]+10),
-                 int(bounding_box[0])-10:int(bounding_box[0]+bounding_box[2]+10)]
-                train_pts = get_arrow_arr(new_img, False)
-                if train_pts is None:
-                    rospy.loginfo("not found in close up")
-                    return False, None, None
-                new_train_pts = []
-                for i, pt in enumerate(train_pts):
-                    new_pt = [pt[0] + int(bounding_box[0])-10, pt[1] + int(bounding_box[1])-10]
-                    new_train_pts.append(new_pt)
-                train_pts = np.array(new_train_pts)
-                new_img = orig_img.copy()
-                query_pts = np.array([[663, 197],
-                               [476, 326],
-                               [474, 234],
-                               [ 31, 232],
-                               [ 30, 162],
-                               [473, 162],
-                               [476,  69]])#get_arrow_arr(template, False)
-                matrix, mask = cv2.findHomography(query_pts, train_pts, 0, 5.0)
-                mat_inv = np.linalg.inv(matrix)
-                h,w = 416, 686#template.shape
-                pts = np.float32([ [10,10],[10,h-10],[w-10,h-10],[w-10,10] ]).reshape(-1,1,2)# + [[320, 223]]
-                # print(pts)
-                dst = cv2.perspectiveTransform(pts, matrix)
-                homography = cv2.polylines(new_img, [np.int32(dst)], True, (255, 0, 0), 3)
-                cam_mat = np.array([[480.0, 0, 400],
-                                    [0, 465.0, 400],
-                                    [0, 0, 1]])
-                axis = np.float32([[0,0,0], [0,3,0], [3,3,0], [3,0,0],
-                   [0,0,-3],[0,3,-3],[3,3,-3],[3,0,-3] ])*50
-                # axis = np.float32([[1,0,0], [0,1,0], [0,0,-1]]).reshape(-1,3)/10
-                axes_img = new_img.copy()
-                ret,rvecs, tvecs = cv2.solvePnP(np.c_[query_pts, np.zeros(7)].astype(np.float32), train_pts.astype(np.float32), cam_mat, 0)
-                r_mtx,_ = cv2.Rodrigues(rvecs)
-                pm = cam_mat.dot(np.c_[r_mtx, tvecs])
-                ea = cv2.decomposeProjectionMatrix(pm)[-1]
-                print(ea)#euler angles
-                imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, cam_mat.astype(np.float32), 0)
-                axes_img = draw(axes_img,train_pts[2:],imgpts)
-                img = axes_img
-                # cv2.imshow('axes img',axes_img)
-                # k = cv2.waitKey(0) & 0xFF
-                orient = ea[1]
-                # if abs(abs(ea[0]) - 180) < 30:
-                #   orient = -orient
-                # cv2.imshow("Homography", homography)
-                # cv2.waitKey(0)
+            # if direction is not None and far == False:
+            #     new_img = orig_img[
+            #      int(bounding_box[1])-10: int(bounding_box[1]+bounding_box[3]+10),
+            #      int(bounding_box[0])-10:int(bounding_box[0]+bounding_box[2]+10)]
+            #     train_pts = get_arrow_arr(new_img, False)
+            #     if train_pts is None:
+            #         rospy.loginfo("not found in close up")
+            #         return False, None, None
+            #     new_train_pts = []
+            #     for i, pt in enumerate(train_pts):
+            #         new_pt = [pt[0] + int(bounding_box[0])-10, pt[1] + int(bounding_box[1])-10]
+            #         new_train_pts.append(new_pt)
+            #     train_pts = np.array(new_train_pts)
+            #     new_img = orig_img.copy()
+            #     query_pts = np.array([[663, 197],
+            #                    [476, 326],
+            #                    [474, 234],
+            #                    [ 31, 232],
+            #                    [ 30, 162],
+            #                    [473, 162],
+            #                    [476,  69]])#get_arrow_arr(template, False)
+            #     matrix, mask = cv2.findHomography(query_pts, train_pts, 0, 5.0)
+            #     mat_inv = np.linalg.inv(matrix)
+            #     h,w = 416, 686#template.shape
+            #     pts = np.float32([ [10,10],[10,h-10],[w-10,h-10],[w-10,10] ]).reshape(-1,1,2)# + [[320, 223]]
+            #     # print(pts)
+            #     dst = cv2.perspectiveTransform(pts, matrix)
+            #     homography = cv2.polylines(new_img, [np.int32(dst)], True, (255, 0, 0), 3)
+            #     cam_mat = np.array([[480.0, 0, 400],
+            #                         [0, 465.0, 400],
+            #                         [0, 0, 1]])
+            #     axis = np.float32([[0,0,0], [0,3,0], [3,3,0], [3,0,0],
+            #        [0,0,-3],[0,3,-3],[3,3,-3],[3,0,-3] ])*50
+            #     # axis = np.float32([[1,0,0], [0,1,0], [0,0,-1]]).reshape(-1,3)/10
+            #     axes_img = new_img.copy()
+            #     ret,rvecs, tvecs = cv2.solvePnP(np.c_[query_pts, np.zeros(7)].astype(np.float32), train_pts.astype(np.float32), cam_mat, 0)
+            #     r_mtx,_ = cv2.Rodrigues(rvecs)
+            #     pm = cam_mat.dot(np.c_[r_mtx, tvecs])
+            #     ea = cv2.decomposeProjectionMatrix(pm)[-1]
+            #     print(ea)#euler angles
+            #     imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, cam_mat.astype(np.float32), 0)
+            #     axes_img = draw(axes_img,train_pts[2:],imgpts)
+            #     img = axes_img
+            #     # cv2.imshow('axes img',axes_img)
+            #     # k = cv2.waitKey(0) & 0xFF
+            #     orient = ea[1]
+            #     # if abs(abs(ea[0]) - 180) < 30:
+            #     #   orient = -orient
+            #     # cv2.imshow("Homography", homography)
+            #     # cv2.waitKey(0)
+
+            if direction is not None:
                 x,y,w,h = bounding_box
                 corners = [self.pixel_to_3d(im_x, im_y) for im_x,im_y\
                            in [(x,y),(x+w,y),(x+w,y+h),(x,y+h)]]
+                x,y,z = np.mean(corners, axis=0)
+                x,y,z = z,-x,y
+                print('x,y,z: ',x,y,z)
+                pos = x, y, z
                 # print("Point",points)
                 # print("Corners 3d",corners)
-                q_pcd = self.get_orientation(corners)
-                print("pcd orient: ",q_pcd)
-                q_pcd = uncast_quaternion(q_pcd)
-                print(transformations.euler_from_quaternion(q_pcd)[2])
-                orient = transformations.euler_from_quaternion(q_pcd)[2]
+
+                if far == False:
+                    q_pcd = self.get_orientation(corners)
+                    # print("pcd orient: ",q_pcd)
+                    q_pcd = uncast_quaternion(q_pcd)
+                    orient = transformations.euler_from_quaternion(q_pcd)[2]
+                    print(orient)
             if far == True:
                   orient = 0
             if direction is not None:
@@ -456,11 +477,11 @@ class client():
                     found = False
             if found:
                   #global path #motion_plan pkg dir
-                  rospy.loginfo(str([found, theta, orient]))
+                  rospy.loginfo(str([found, pos, orient]))
             #return found, theta, orient   #theta and orient wrt forward direction, in degree
                   #cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
-                  cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
-            return found, theta, orient
+                  # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
+            return found, pos, orient
 
       def get_depth(self, x, y):
             gen = pc2.read_points(self.roscloud, field_names='z', skip_nans=False, uvs=[(x, y)]) #Questionable
