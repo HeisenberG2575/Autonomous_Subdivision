@@ -27,6 +27,10 @@ source devel/setup.bash
 # source devel/setup.zsh
 roslaunch motion_plan autonomous.launch
 ```
+Use this for headless(no gazebo gui)
+```
+roslaunch motion_plan autonomous.launch gazebo_gui:=false
+```
 
 
 ## Preventing Common Errors:
