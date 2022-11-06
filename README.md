@@ -1,24 +1,33 @@
 # MRT
 
-This workspace contains a gazebo environment and a bot which can be used for testing path planning algorithms. All of this has been tested and built on ROS melodic 
+This workspace contains a gazebo environment and a bot which can be used for testing path planning algorithms. All of this has been tested and built on ROS Noetic
 
 ## To use this on your system, you must have the following:
 - ROS
+- Python3
 - Gazebo
 - Various dependencies of ROS such as Rviz, Robot State Publisher. (if you have installed full desktop version of ROS, you already have them by default)
 
 ## To run the files on your system:
-1. Clone the workspace.
-2. Open terminal and move to the repo and run `catkin_make` and `source devel/setup.bash`
-3. To open environment in gazebo run command `roslaunch bot_description spawn.launch`
-4. To see the laser scan markings in rviz:
-- Open a new terminal and run `roslaunch bot_description rviz.launch`. A RviZ window pops up after this, then make the foll changes
-- In the toolbar on left, change **Fixed Frame** to odom
-- On the bottom left, click on the `Add` button, and select RobotModel, you should be able to see the bot in RviZ now.
-- Similarly, add the laserscan by adding LaserScan after clicking on `Add` button. 
-- Change the topic under laser scan to /mrt/laser/scan and you should see some more parameters under the laserscan now.
-5. To move the bot manually and see the RviZ markings change, in a new tab run command `rosrun teleop_twist_keyboard teleop_twist_keyboard.py` and navigate as commanded.
-6. To know how to take readings from laser scanner into the code. See file reading_lidar.py inside the motion_plan package. To run this file, run command `rosrun motion_plan reading_lidar.py`
+1. Clone the workspace 
+```
+git clone https://github.com/iitbmartian/Autonomous_Subdivision.git
+# git clone git@github.com:iitbmartian/Autonomous_Subdivision.git
+```
+3. Open terminal and cd to the repo, install dependencies and build the ws (run catkin_make)
+```
+cd Autonomous_Subdivision
+## This may take time, also requires sudo access
+rosdep install -y --from-paths . --ignore-src --rosdistro noetic
+catkin_make
+```
+5. source the ws and launch the simulation
+```
+source devel/setup.bash
+# source devel/setup.zsh
+roslaunch motion_plan autonomous.launch
+```
+
 
 ## Preventing Common Errors:
 - run command `source devel/setup.bash` everytime you open a new terminal
