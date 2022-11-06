@@ -8,7 +8,7 @@ import sys
 
 
 def main_node():
-    
+
     my_client = client()
     rate = rospy.Rate(5)
     prev_x,prev_y, prev_q = my_client.bot_to_map(0,0, (0,0,0,1)) #prev always in map frame
@@ -32,21 +32,27 @@ def main_node():
             if posx is None:
                 rospy.loginfo("Arrow detected but not found in LIDAR. Check width/error/arrow detection")
                 found = False
-            
+
             else:
-                if my_client.is_complete(posx, posy):
+                orient = orient + 90 if orient < 0 else orient - 90
+                q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                x,y,q = my_client.bot_to_map(0,0, q)
+                if my_client.is_complete(posx, posy, q):
                     rospy.loginfo("Already visited recently found Goal: " + str([posx, posy]))
                     found = False
                 else:
+                    my_client.add_arrow(posx, posy, q, color=(1,0,0))#Add Rviz arrow marker, map frame
                     i = 1
                     #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                     x,y,q_p = my_client.bot_to_map(0,0, (0,0,0,1))#bot location
-                    success = my_client.send_goal(*my_client.find_off_goal(posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
+                    success = my_client.send_goal(*my_client.find_off_goal(\
+                        posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
                     rospy.sleep(1)
                     dist = norm([x-posx, y-posy])
                     while success == False and dist > 1.75:#keep checking if we are moving correctly
                         dist = norm([x-posx, y-posy])
-                        success = my_client.send_goal(*my_client.find_off_goal(posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
+                        success = my_client.send_goal(*my_client.find_off_goal(\
+                            posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
                         rospy.sleep(1)
                         found, theta, orient = my_client.arrow_detect(far = dist > 2)
                         posx,posy = my_client.find_obs_lidar(theta)
@@ -58,17 +64,17 @@ def main_node():
                         q_p=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                         x,y,q_p = my_client.bot_to_map(0,0, q_p)#bot location, with perpendicular to arrow goal
                         dist = norm([x-posx, y-posy])
-                        if my_client.is_complete(posx, posy):
+                        if my_client.is_complete(posx, posy, q_p):
                             rospy.loginfo("Already visited recently found Goal: " + str([posx, posy]))
                             # found, theta, orient, posx, posy = my_client.recovery()
                             found = False
                             break
                     if found == True:
                         # my_client.cancel_goal()
-                        rospy.sleep(5)
+                        rospy.sleep(0)
                         success = my_client.move_to_goal(*my_client.find_off_goal(posx,posy, q = q_p, offset = (-1.25,0,0,0)), frame = "map")
 
-                        found, theta, orient = my_client.arrow_detect(far = False)
+                        found, theta, orient = my_client.arrow_detect(far=False)
                         posx,posy = my_client.find_obs_lidar(theta)
                         if found == False or posx is None:
                             found, theta, orient, posx, posy = my_client.recovery()

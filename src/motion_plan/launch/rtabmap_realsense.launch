@@ -36,7 +36,7 @@
   <arg name="gui_cfg"                 default="~/.ros/rtabmap_gui.ini" />
   <arg name="rviz_cfg"                default="$(find rtabmap_ros)/launch/config/rgbd.rviz" />
   
-  <arg name="frame_id"                default="base_footprint"/>     <!-- Fixed frame id, you may set "base_link" or "base_footprint" if they are published -->
+  <arg name="frame_id"                default="root_link"/>     <!-- Fixed frame id, you may set "base_link" or "base_footprint" if they are published -->
   <arg name="odom_frame_id"           default=""/>                <!-- If set, TF is used to get odometry instead of the topic -->
   <arg name="odom_frame_id_init"      default=""/>                <!-- If set, TF map->odom is published even if no odometry topic has been received yet. The frame id should match the one in the topic. -->
   <arg name="map_frame_id"            default="map"/>
@@ -59,13 +59,13 @@
   <arg unless="$(arg stereo)" name="approx_sync"  default="$(arg depth)"/>         
    
   <!-- RGB-D related topics -->
-  <arg name="rgb_topic"               default="/realsense/color/image_raw" />
-  <arg name="depth_topic"             default="/realsense/depth/image_rect_raw" />
-  <arg name="camera_info_topic"       default="/realsense/color/camera_info" />
-  <arg name="depth_camera_info_topic" default="/realsense/depth/camera_info" />
+  <arg name="rgb_topic"               default="/mrt/camera/color/image_raw" />
+  <arg name="depth_topic"             default="/mrt/camera/depth/image_rect_raw" />
+  <arg name="camera_info_topic"       default="/mrt/camera/color/camera_info" />
+  <arg name="depth_camera_info_topic" default="/mrt/camera/depth/camera_info" />
   
   <!-- stereo related topics -->
-  <arg name="stereo_namespace"        default="/realsense"/>
+  <arg name="stereo_namespace"        default="/mrt/camera"/>
   <arg name="left_image_topic"        default="$(arg stereo_namespace)/left_raw/image_raw_color" />
   <arg name="right_image_topic"       default="$(arg stereo_namespace)/right_raw/image_raw_color" />      <!-- using grayscale image for efficiency -->
   <arg name="left_camera_info_topic"  default="$(arg stereo_namespace)/left/camera_info" />
@@ -87,7 +87,7 @@
   <arg name="subscribe_scan"          default="false"/>
   <arg name="scan_topic"              default="/scan"/>
   <arg name="subscribe_scan_cloud"    default="false"/>
-  <arg name="scan_cloud_topic"        default="/realsense/point_cloud/cloud_registered"/>
+  <arg name="scan_cloud_topic"        default="/mrt/camera/point_cloud/cloud_registered"/>
   <arg name="subscribe_scan_descriptor" default="false"/>
   <arg name="scan_descriptor_topic"   default="/scan_descriptor"/>
   <arg name="scan_cloud_max_points"   default="0"/>
@@ -102,7 +102,7 @@
    
   <arg name="visual_odometry"          default="false"/>          <!-- Launch rtabmap visual odometry node -->
   <arg name="icp_odometry"             default="false"/>         <!-- Launch rtabmap icp odometry node -->
-  <arg name="odom_topic"               default="vo_odom"/>          <!-- Odometry topic name /gazebo/controllers/diff_drive/odom or /realsense/odom-->
+  <arg name="odom_topic"               default="vo_odom"/>          <!-- Odometry topic name /gazebo/controllers/diff_drive/odom or /mrt/camera/odom-->
   <arg name="slam_odom_topic"          default="/odom"/> <!-- Odometry topic name for slam /rtabmap/odom/filtered-->
   <arg name="vo_frame_id"              default="odom"/> <!-- Visual/Icp odometry frame ID for TF , initially odom topic-->
   <arg name="publish_tf_odom"          default="false"/>
