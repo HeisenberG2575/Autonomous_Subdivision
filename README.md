@@ -10,25 +10,27 @@ This workspace contains a gazebo environment and a bot which can be used for tes
 
 ## To run the files on your system:
 1. Clone the workspace 
-```
-git clone https://github.com/iitbmartian/Autonomous_Subdivision.git
-# git clone git@github.com:iitbmartian/Autonomous_Subdivision.git
+```bash
+git clone --recurse-submodules https://github.com/iitbmartian/Autonomous_Subdivision.git
+# git clone --recurse-submodules git@github.com:iitbmartian/Autonomous_Subdivision.git
+## incase you forgot to clone submodules recursively, do the following 
+# git submodule update --init --recursive
 ```
 3. Open terminal and cd to the repo, install dependencies and build the ws (run catkin_make)
-```
+```bash
 cd Autonomous_Subdivision
 ## This may take time, also requires sudo access
 rosdep install -y --from-paths . --ignore-src --rosdistro noetic
 catkin_make
 ```
 5. source the ws and launch the simulation
-```
+```bash
 source devel/setup.bash
 # source devel/setup.zsh
 roslaunch motion_plan autonomous.launch
 ```
 Use this for headless(no gazebo gui)
-```
+```bash
 roslaunch motion_plan autonomous.launch gazebo_gui:=false
 ```
 
