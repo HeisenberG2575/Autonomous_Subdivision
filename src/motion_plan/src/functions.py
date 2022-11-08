@@ -193,7 +193,7 @@ class client():
                   j += 1
             orient = orient + 90 if orient < 0 else orient - 90
             q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
-            posx,posy,q = my_client.bot_to_map(pos[0], pos[1], q) #map frame
+            posx,posy,q = self.bot_to_map(pos[0], pos[1], q) #map frame
             if found == False or pos is None or self.is_complete(posx, posy, q):
                   rospy.loginfo("Failed. Moving to last known good location")
                   self.move_to_goal(*self.last_good_location)
