@@ -38,8 +38,8 @@ def main_node():
             else:
                 # rotate q by 90 degrees to make it point upwards
                 q_right = (0,-np.sqrt(0.5),0,np.sqrt(0.5))
-                q = quaternion_multiply(uncast_quaternion(q),q_right)
-                my_client.add_arrow(posx, posy, q, color=(1,0,0))#Add Rviz arrow marker, map frame
+                q_right = quaternion_multiply(uncast_quaternion(q),q_right)
+                my_client.add_arrow(posx, posy, q_right, color=(1,0,0))#Add Rviz arrow marker, map frame
                 i = 1
                 #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                 x,y,q_p = my_client.bot_to_map(0,0, (0,0,0,1))#bot location
@@ -78,9 +78,9 @@ def main_node():
                     if found == False:
                         continue
                     q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
-                    posx,posy, q = my_client.bot_to_map(pos[0], pos[1], q)
-                    success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1.3)
                     posx,posy, q = my_client.bot_to_map(pos[0], pos[1], q, frame="camera_link")
+                    # posx,posy, q = my_client.bot_to_map(0, 0, q)
+                    success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1.3)
                     my_client.add_arrow(posx, posy, q, color=(0,1,0), pos_z = pos[2])#Add Rviz arrow marker, map frame
                     if success == True:
                         #my_client.add_arrow(*my_client.bot_to_map(posx, posy, q, frame="camera_link"), color=(0,1,1))
@@ -90,7 +90,7 @@ def main_node():
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
         if not found:
-            nearby_goal = just_ahead(prev_x,prev_y, prev_q, off_dist= 0.5 + 0.65*i)
+            nearby_goal = just_ahead(prev_x,prev_y, prev_q, off_dist= 0.5 + 0.7*i)
             my_client.send_goal(*nearby_goal,frame="map")
             rospy.sleep(1.0)#Sleep for 1-2s and let the bot move towards the goal
             i+=1
