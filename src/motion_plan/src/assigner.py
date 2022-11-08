@@ -36,18 +36,21 @@ def main_node():
                 rospy.loginfo("Already visited recently found Goal: " + str([posx, posy]))
                 found = False
             else:
+                # rotate q by 90 degrees to make it point upwards
+                q_right = (0,-np.sqrt(0.5),0,np.sqrt(0.5))
+                q = quaternion_multiply(uncast_quaternion(q),q_right)
                 my_client.add_arrow(posx, posy, q, color=(1,0,0))#Add Rviz arrow marker, map frame
                 i = 1
                 #rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                 x,y,q_p = my_client.bot_to_map(0,0, (0,0,0,1))#bot location
                 success = my_client.send_goal(*my_client.find_off_goal(\
-                      posx,posy, q = q_p, offset = (-1.75,0,0,0)), frame = "map")
+                      posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
                 rospy.sleep(1)
                 dist = norm([x-posx, y-posy])
                 while success == False and dist > 1.75:#keep checking if we are moving correctly
                     dist = norm([x-posx, y-posy])
                     success = my_client.send_goal(*my_client.find_off_goal(\
-                        posx,posy, q = q_p, offset = (-1.75,0,0,0)), frame = "map")
+                        posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
                     rospy.sleep(1)
                     found, pos, orient = my_client.arrow_detect(far = dist > 2)
                     if found == False or posx is None:
@@ -67,7 +70,7 @@ def main_node():
                     # TODO change to 20
                     rospy.sleep(1)
                     success = my_client.move_to_goal(*my_client.find_off_goal(\
-                        posx,posy, q = q_p, offset = (-1.6,0,0,0)), frame = "map")
+                        posx,posy, q = q_p, offset = (-1.5,0,0,0)), frame = "map")
 
                     found, pos, orient = my_client.arrow_detect(far=False)
                     if found == False or pos is None:
@@ -75,7 +78,7 @@ def main_node():
                     if found == False:
                         continue
                     q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
-                    posx,posy, q = my_client.bot_to_map(0, 0, q)
+                    posx,posy, q = my_client.bot_to_map(pos[0], pos[1], q)
                     success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1.3)
                     posx,posy, q = my_client.bot_to_map(pos[0], pos[1], q, frame="camera_link")
                     my_client.add_arrow(posx, posy, q, color=(0,1,0), pos_z = pos[2])#Add Rviz arrow marker, map frame
