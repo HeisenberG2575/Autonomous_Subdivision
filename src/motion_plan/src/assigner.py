@@ -80,8 +80,8 @@ def main_node():
                     q=(0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                     posx,posy, q = my_client.bot_to_map(pos[0], pos[1], q, frame="camera_link")
                     # posx,posy, q = my_client.bot_to_map(0, 0, q)
+                    my_client.add_arrow(posx, posy, q, color=(0,1,0), pos_z = 0.48)#Add Rviz arrow marker, map frame
                     success = my_client.move_to_off_goal(posx,posy, q = q, frame = "map", off_dist = 1.3)
-                    my_client.add_arrow(posx, posy, q, color=(0,1,0), pos_z = pos[2])#Add Rviz arrow marker, map frame
                     if success == True:
                         #my_client.add_arrow(*my_client.bot_to_map(posx, posy, q, frame="camera_link"), color=(0,1,1))
                         prev_x, prev_y, prev_q = posx, posy, q#map frame

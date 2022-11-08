@@ -80,6 +80,7 @@ class client():
                         new_ps = self.listener.transformPose("map", ps)
                         success = True
                   except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                        new_ps = PoseStamped()
                         success = False
             new_ps.pose.orientation.x = 0#TODO Check if advisable to do so
             new_ps.pose.orientation.y = 0
