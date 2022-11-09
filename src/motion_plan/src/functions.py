@@ -66,6 +66,7 @@ class client():
       # TODO change to ps, q format for all
       def bot_to_map(self, pos_x, pos_y, q, frame=ROOT_LINK):
             ps = PoseStamped()
+            new_ps = PoseStamped()
 
             #set up the frame parameters
             ps.header.frame_id = frame
@@ -80,7 +81,6 @@ class client():
                         new_ps = self.listener.transformPose("map", ps)
                         success = True
                   except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                        new_ps = PoseStamped()
                         success = False
             new_ps.pose.orientation.x = 0#TODO Check if advisable to do so
             new_ps.pose.orientation.y = 0
@@ -303,12 +303,12 @@ class client():
                                                ransac_n=3,
                                                num_iterations=500)
             [a,b,c,d] = plane_model
-            a,b,c,d = (-a,-b,-c,d) if c > 0 else (a,b,c,d)
-            q = q_from_vector3D((a,b,c))
-            # print(a,b,c,d)
-            # print(q)
+            a,b,c,d = (-a,-b,-c,-d) if d > 0 else (a,b,c,d)
+            # print("abcd:", a,b,c,d)
+            # print(np.arcsin(-a))
+            theta = np.arcsin(-a)
 
-            return q
+            return theta
 
       def crop_pcd(self, corners):
             """Accepts 3D points and returns a cropped pcd
@@ -462,16 +462,13 @@ class client():
                 # print("Corners 3d",corners)
 
                 if far == False:
-                    q_pcd = self.get_orientation(corners)
-                    # print("pcd orient: ",q_pcd)
-                    q_pcd = uncast_quaternion(q_pcd)
-                    orient = transformations.euler_from_quaternion(q_pcd)[2]
-                    print(orient)
+                    orient = self.get_orientation(corners)*180/np.pi
+                    # print(orient)
             if far == True:
                   orient = 0
             if direction is not None:
                 if direction == 1:  #Right
-                    orient = -90 - orient
+                    orient = orient - 90
                 elif direction == 0:#Left
                     orient = 90 + orient
                 else:
@@ -479,7 +476,7 @@ class client():
                     found = False
             if found:
                   #global path #motion_plan pkg dir
-                  rospy.loginfo(str([found, pos, orient]))
+                  rospy.loginfo(str(["arrow found!", pos, orient]))
             #return found, theta, orient   #theta and orient wrt forward direction, in degree
                   #cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
                   # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)

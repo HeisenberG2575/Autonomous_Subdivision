@@ -20,11 +20,11 @@ def main_node():
             i = 0
         if len(my_client.completed_list) == 6:
             rospy.loginfo("End Goal found")
-            # success = my_client.move_to_goal(12,6,q=(0,0,1/np.sqrt(2),1/np.sqrt(2)))
-            # if success:
-            #     rospy.loginfo("Completed all goals")
-            # else:
-            #     rospy.loginfo("Failed")
+            success = my_client.move_to_goal(12,6,q=(0,0,1/np.sqrt(2),1/np.sqrt(2)))
+            if success:
+                rospy.loginfo("Completed all goals")
+            else:
+                rospy.loginfo("Failed")
             break
         found, pos, orient = my_client.arrow_detect(far=True)
         if found:
