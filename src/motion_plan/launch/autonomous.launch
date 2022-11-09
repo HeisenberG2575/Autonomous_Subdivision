@@ -6,6 +6,7 @@
     <arg name="simulation" default="1"/>
     <arg name="gazebo_gui" default="1"/>
     <arg name="gps" default="0"/>
+    <arg name="assigner" default="1"/>
     <include file="$(find bot_description)/launch/spawn.launch" if="$(arg simulation)">
         <arg name="gui" value="$(arg gazebo_gui)"/>
     </include>
@@ -15,7 +16,7 @@
     <include file="$(find motion_plan)/launch/move_base.launch">
         <arg name="simulation" value="$(arg simulation)"/>
     </include>
-    <node name="assigner" pkg="motion_plan" type="assigner.py"/>
+    <node name="assigner" pkg="motion_plan" type="assigner.py" if="$(arg assigner)"/>
     <!-- <node name="odom_pub" pkg="motion_plan" type="odom_pub.py" unless="$(arg simulation)"/> -->
     <!-- <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py" if="$(arg gps)"/> -->
 </launch>

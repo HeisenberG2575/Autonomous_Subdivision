@@ -122,7 +122,7 @@ class client():
                   return False
 
       def move_to_off_goal(self,xGoal,yGoal, q=None, frame="map", off_dist=1.5):
-            return self.move_to_goal(*self.find_off_goal(xGoal,yGoal, q=q, frame=frame, offset=(0,off_dist,0,0)), frame=frame)
+            return self.move_to_goal(*self.find_off_goal(xGoal,yGoal, q=q, frame=frame, offset=(0.3,off_dist,0,0)), frame=frame)
 
       def find_off_goal(self, xGoal,yGoal, q=None, frame="map", offset=(0,0,0,0)):
             if frame == ROOT_LINK:
@@ -454,7 +454,7 @@ class client():
                 x,y,w,h = bounding_box
                 corners = [self.pixel_to_3d(im_x, im_y) for im_x,im_y\
                            in [(x,y),(x+w,y),(x+w,y+h),(x,y+h)]]
-                x,y,z = np.mean(corners, axis=0)
+                x,y,z = self.pixel_to_3d(int(x+w/2),int(y+h/2))
                 x,y,z = z,-x,y
                 print('x,y,z: ',x,y,z)
                 pos = x, y, z

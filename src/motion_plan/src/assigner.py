@@ -18,7 +18,7 @@ def main_node():
         if i > 8:
             found, pos, orient = my_client.recovery()
             i = 0
-        if len(my_client.completed_list) == 6:
+        if len(my_client.completed_list) == 5:
             rospy.loginfo("End Goal found")
             success = my_client.move_to_goal(12,6,q=(0,0,1/np.sqrt(2),1/np.sqrt(2)))
             if success:
@@ -90,9 +90,9 @@ def main_node():
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
         if not found:
-            nearby_goal = just_ahead(prev_x,prev_y, prev_q, off_dist= 0.5 + 0.7*i)
+            nearby_goal = just_ahead(prev_x,prev_y, prev_q, off_dist= 0.7 + 0.7*i)
             my_client.send_goal(*nearby_goal,frame="map")
-            rospy.sleep(1.0)#Sleep for 1-2s and let the bot move towards the goal
+            rospy.sleep(1.2)#Sleep for 1-2s and let the bot move towards the goal
             i+=1
     	# rate.sleep()
 
