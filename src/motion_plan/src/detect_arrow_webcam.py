@@ -217,7 +217,7 @@ def get_arrow_arr(img, debug = True):
             # points = np.concatenate([points, [(points[2]+points[3])/2], [(points[-2]+points[-3])/2]])
             # print(points)
             if debug:
-                img_tmp = img.copy()    
+                img_tmp = img.copy()
                 for n,i in enumerate(points):
                     cv2.circle(img_tmp, tuple(i), 3, (125), cv2.FILLED)
                 cv2.imshow(str(n)+"th point", img_tmp)
@@ -268,10 +268,10 @@ def arrow_detect(img, far = True):
                               cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
                               cv2.circle(img, arrow_tip, 3, (0, 0, 255), cv2.FILLED)
                               print("arrow_x_img: "+str(np.average(rect, axis=0)[0] ))
-            
+
             if direction is not None and far == False: #TODO: Improve upon this naive orientation
                 new_img = orig_img[
-                 int(bounding_box[1])-10: int(bounding_box[1]+bounding_box[3]+10), 
+                 int(bounding_box[1])-10: int(bounding_box[1]+bounding_box[3]+10),
                  int(bounding_box[0])-10:int(bounding_box[0]+bounding_box[2]+10)]
                 train_pts = get_arrow_arr(new_img, True)
                 # print(train_pts)
@@ -280,7 +280,7 @@ def arrow_detect(img, far = True):
                     new_pt = [pt[0] + int(bounding_box[0])-10, pt[1] + int(bounding_box[1])-10]
                     new_train_pts.append(new_pt)
                 train_pts = np.array(new_train_pts)
-                # img_tmp = orig_img.copy()    
+                # img_tmp = orig_img.copy()
                 # for n,i in enumerate(train_pts):
                 #     cv2.circle(img_tmp, tuple(i), 3, (125), cv2.FILLED)
                 # cv2.imshow(str(n)+"th point", img_tmp)
@@ -298,7 +298,7 @@ def arrow_detect(img, far = True):
                     return False, None, None, None, img
                 matrix, mask = cv2.findHomography(query_pts, train_pts, 0, 5.0)
                 # print(matrix)
-                mat_inv = np.linalg.inv(matrix) 
+                mat_inv = np.linalg.inv(matrix)
                 # warped = np.array([])
                 # img_tmp = orig_img.copy()
                 # print(tuple(img_tmp.shape[:2]))
@@ -310,7 +310,7 @@ def arrow_detect(img, far = True):
                 # print(pts)
                 dst = cv2.perspectiveTransform(pts, matrix)
                 homography = cv2.polylines(new_img, [np.int32(dst)], True, (255, 0, 0), 3)
-                cam_mat = np.array([[480.0, 0, 400], 
+                cam_mat = np.array([[480.0, 0, 400],
                                     [0, 465.0, 400],
                                     [0, 0, 1]])
                 axis = np.float32([[0,0,0], [0,3,0], [3,3,0], [3,0,0],
@@ -372,8 +372,8 @@ if __name__ == '__main__':
             print("Not found")
             num2 += 1
             print("Not found in :", num2)
-            
-    
+
+
     #Uncomment what you need
     time_max = 0
     time_sum = 0
