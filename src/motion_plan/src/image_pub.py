@@ -33,7 +33,7 @@ class ImagePublisher:
         while not rospy.is_shutdown():
             ret, frame = self.vid.read()
             # print(ret)
-            ros_img = self.br.cv2_to_imgmsg(frame,header=Header(seq=self.counter,stamp=rospy.Time.now(),frame=FRAME))
+            ros_img = self.br.cv2_to_imgmsg(frame,header=Header(seq=self.counter,stamp=rospy.Time.now(),frame_id=FRAME))
             self.pub.publish(ros_img)
             rate.sleep()
             self.counter+=1
