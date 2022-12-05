@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from sensor_msgs.msg import Image # Image is the message type
-from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
+from sensor_msgs.msg import Image  # Image is the message type
+from cv_bridge import CvBridge  # Package to convert between ROS and OpenCV Images
 
 import sys
 import argparse
@@ -11,7 +11,9 @@ import cv2
 import os, glob, time
 
 from detect_arrow_webcam import *
-ROS_TOPIC = '/realsense/color/image_raw'#'/mrt/camera/color/image_raw'
+
+ROS_TOPIC = "/realsense/color/image_raw"  #'/mrt/camera/color/image_raw'
+
 
 class ImageSubscriber:
 
@@ -32,9 +34,9 @@ class ImageSubscriber:
         self.org = (50, 50)
         self.fontScale = 1
         self.thickness = 2
-        self.vid_file = cv2.VideoWriter('arrow.mp4',\
-                         cv2.VideoWriter_fourcc(*'MP4V'),\
-                         10, (640,480))
+        self.vid_file = cv2.VideoWriter(
+            "arrow.mp4", cv2.VideoWriter_fourcc(*"MP4V"), 10, (640, 480)
+        )
         rospy.spin()
         print("all done!")
         self.vid_file.release()
@@ -52,14 +54,22 @@ class ImageSubscriber:
         print("shape: ", output.shape)
 
         if direction == 1:
-            direction = 'Right'
+            direction = "Right"
         elif direction is None:
             direction = "not found"
         else:
-            direction = 'Left'
+            direction = "Left"
 
-        output = cv2.putText(output, direction, self.org, self.font,
-                            self.fontScale, self.color, self.thickness, cv2.LINE_AA)
+        output = cv2.putText(
+            output,
+            direction,
+            self.org,
+            self.font,
+            self.fontScale,
+            self.color,
+            self.thickness,
+            cv2.LINE_AA,
+        )
 
         self.vid_file.write(output)
         cv2.imshow("Arrow", output)
@@ -67,9 +77,12 @@ class ImageSubscriber:
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #     break
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--topic", help="ROS Topic to subscribe to", default=ROS_TOPIC)
+    parser.add_argument(
+        "-t", "--topic", help="ROS Topic to subscribe to", default=ROS_TOPIC
+    )
     args = parser.parse_args()
 
     subscriber = ImageSubscriber(args.topic)
