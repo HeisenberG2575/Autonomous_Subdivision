@@ -53,8 +53,8 @@ class client:
         rospy.Subscriber("/mrt/laser/scan", LaserScan, self.lidar_callback)
         rospy.Subscriber("/mrt/camera/color/image_raw", Image, self.cam_callback)
         rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
-        rospy.Subscriber("/mrt/camera/depth/points", PointCloud2, self.pc_callback)
-        rospy.wait_for_message("/mrt/camera/depth/points", PointCloud2, timeout=15)
+        rospy.Subscriber("/mrt/camera/depth/color/points", PointCloud2, self.pc_callback)
+        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=15)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
             "/mrt/camera/color/camera_info", CameraInfo, self.info_callback

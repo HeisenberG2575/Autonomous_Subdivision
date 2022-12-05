@@ -13,7 +13,7 @@
         pkg="imu_filter_madgwick" 
         type="imu_filter_node">
     <rosparam command="load"
-              file="$(find leo_navigation)/config/imu_filter_node.yaml"/>
+              file="$(find motion_plan)/config/imu_filter_node.yaml"/>
               <!-- <remap from="/imu/data_raw" to="/zed2/imu/data" /> -->
               <!-- <remap from="/imu/data" to="/zed2/imu/data_filtered" /> -->
   </node>

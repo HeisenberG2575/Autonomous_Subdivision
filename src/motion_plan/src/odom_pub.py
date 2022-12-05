@@ -8,8 +8,9 @@ from tf.transformations import quaternion_from_euler
 import tf
 from rover_msgs.msg import drive_msg
 
-BASE_WIDTH = 0.4375 * 2  # base_width/2*2
+BASE_WIDTH = 0.4375 * 1  # base_width/2*2
 ROOT_LINK = "root_link"
+PUBLISH_TF = False
 
 # class odom_cmd():
 #   def __init__(self):
@@ -35,6 +36,7 @@ class EncoderOdom:
         self.last_enc_left = 0
         self.last_enc_right = 0
         self.last_enc_time = rospy.Time.now()
+        self.publish_tf = PUBLISH_TF
         rospy.spin()
 
     @staticmethod
@@ -57,7 +59,7 @@ class EncoderOdom:
             vel_x = 0
             vel_y = 0
             vel_theta = 0
-            speed = msg.speed*0.03/127
+            speed = msg.speed*0.3/127
             if msg.direction in ["forward", "backward"]:
                 vel_x = speed if msg.direction == "forward" else -speed
             else:
@@ -97,14 +99,15 @@ class EncoderOdom:
         quat = quaternion_from_euler(0, 0, cur_theta)
         current_time = rospy.Time.now()
 
-        br = tf.TransformBroadcaster()
-        br.sendTransform(
-            (cur_x, cur_y, 0),
-            quaternion_from_euler(0, 0, -cur_theta),
-            current_time,
-            ROOT_LINK,
-            "odom",
-        )
+        if self.publish_tf:
+            br = tf.TransformBroadcaster()
+            br.sendTransform(
+                (cur_x, cur_y, 0),
+                quaternion_from_euler(0, 0, -cur_theta),
+                current_time,
+                ROOT_LINK,
+                "odom",
+            )
 
         odom = Odometry()
         odom.header.stamp = current_time

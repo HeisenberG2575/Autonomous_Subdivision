@@ -27,11 +27,12 @@ class ImagePublisher:
         rospy.init_node("ip_image_pub", anonymous=True)
         self.br = CvBridge()
         rate = rospy.Rate(10)
-        self.pub = rospy.Publisher("/mrt/camera1/image_raw", Image)
+        self.pub = rospy.Publisher("/mrt/camera1/image_raw", Image, queue_size=10)
         while not rospy.is_shutdown():
             ret, frame = self.vid.read()
             # print(ret)
             ros_img = self.br.cv2_to_imgmsg(frame)
+            ros_img.header = 
             self.pub.publish(ros_img)
             rate.sleep()
 

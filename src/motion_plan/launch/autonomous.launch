@@ -18,7 +18,7 @@
         <arg name="depth_height" value="480"/>
         <arg name="depth_fps" value="30"/>
         <arg name="camera" value="mrt/camera"/>
-        <!-- <arg name="filters" value="pointcloud"/> -->
+        <arg name="filters" value="pointcloud"/>
     </include>
     <include file="$(find motion_plan)/launch/lidar.launch" if="$(arg lidar)"/>
     <include file="$(find motion_plan)/launch/rtabmap_zed2.launch" if="$(arg zed2)"/>

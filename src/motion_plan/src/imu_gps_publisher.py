@@ -79,7 +79,7 @@ class sensor_data_pub:
     def publish_imu(self):
         self.imu = Imu()
         self.imu.header.frame_id = "imu_link"
-        self.imu.header.stamp = rospy.Time.now() + rospy.Duration(nsecs=1e8)
+        self.imu.header.stamp = rospy.Time.now() + rospy.Duration(nsecs=2e8)
 
         self.imu.orientation = self.q
         self.imu.orientation_covariance = [
