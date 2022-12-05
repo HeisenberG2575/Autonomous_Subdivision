@@ -7,6 +7,9 @@ This workspace contains a gazebo environment and a bot which can be used for tes
 - Python3
 - Gazebo
 - Various dependencies of ROS such as Rviz, Robot State Publisher. (if you have installed full desktop version of ROS, you already have them by default)
+- python3-pip
+- python-is-python3
+Use ros_install.sh script if you haven't installed these.
 
 ## To run the files on your system:
 1. Clone the workspace 
@@ -15,6 +18,9 @@ git clone --recurse-submodules https://github.com/iitbmartian/Autonomous_Subdivi
 # git clone --recurse-submodules git@github.com:iitbmartian/Autonomous_Subdivision.git
 ## incase you forgot to clone submodules recursively, do the following 
 # git submodule update --init --recursive
+
+## incase you haven't installed ROS
+# bash ./Autonomous_Subdivision/ros_install.sh
 ```
 3. Open terminal and cd to the repo, install dependencies and build the ws (run catkin_make)
 ```bash
