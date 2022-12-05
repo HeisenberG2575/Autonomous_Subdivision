@@ -21,8 +21,8 @@ class sensor_data_pub:
         rospy.Subscriber("Acc", Float64MultiArray, self.callback_Acc)
         rospy.Subscriber("LatLon", Float64MultiArray, self.callback_LatLon)
         rospy.Subscriber("Omega", Float64MultiArray, self.callback_Omega)
-        self.imu_pub = rospy.Publisher("imu", Imu, queue_size=10)
-        self.gps_pub = rospy.Publisher("fix", NavSatFix, queue_size=10)
+        self.imu_pub = rospy.Publisher("/imu/data_raw", Imu, queue_size=10)
+        self.gps_pub = rospy.Publisher("/gps/fix", NavSatFix, queue_size=10)
         rospy.spin()
 
     def callback_IMU(self, data):
