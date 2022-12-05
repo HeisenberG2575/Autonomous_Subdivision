@@ -28,5 +28,6 @@
     <node name="assigner" pkg="motion_plan" type="assigner.py" if="$(arg assigner)"/>
     <node name="odom_pub" pkg="motion_plan" type="odom_pub.py" unless="$(arg simulation)"/>
     <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py" if="$(arg gps)"/>
+    <include file="$(find motion_plan)/launch/odometry.launch" if="$(arg gps)"/>
 </launch>
 

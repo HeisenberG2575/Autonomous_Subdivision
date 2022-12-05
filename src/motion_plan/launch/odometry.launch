@@ -28,6 +28,7 @@
     <rosparam if="$(arg three_d)"
               command="load"
               file="$(find motion_plan)/config/ekf_localization_node/ekf_3d.yaml"/>
+    <!-- <remap from="/odometry/filtered" to="/odom" /> -->
   </node>
 
   <!-- <node name="ekf_localization_node_map"
