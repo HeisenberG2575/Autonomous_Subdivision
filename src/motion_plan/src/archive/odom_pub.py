@@ -6,7 +6,6 @@ from geometry_msgs.msg import Quaternion, Twist
 import numpy as np
 from tf.transformations import quaternion_from_euler
 import tf
-from rover_msgs.msg import drive_msg
 
 BASE_WIDTH = 0.4375 * 2  # base_width/2*2
 ROOT_LINK = "root_link"
@@ -26,7 +25,7 @@ ROOT_LINK = "root_link"
 class EncoderOdom:
     def __init__(self):
         rospy.init_node("odom_pub", anonymous=True)
-        self.sub = rospy.Subscriber("/rover/drive_directives", drive_msg, self.vel_update)
+        self.sub = rospy.Subscriber("/cmd_vel_filtered", Twist, self.vel_update)
         self.BASE_WIDTH = BASE_WIDTH
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
         self.cur_x = 0
@@ -54,14 +53,9 @@ class EncoderOdom:
             vel_x = 0.0
             vel_theta = 0.0
         else:
-            vel_x = 0
-            vel_y = 0
-            vel_theta = 0
-            speed = msg.speed*0.03/127
-            if msg.direction in ["forward", "backward"]:
-                vel_x = speed if msg.direction == "forward" else -speed
-            else:
-                vel_theta = speed/self.BASE_WIDTH
+            vel_x = msg.linear.x
+            vel_y = msg.linear.y
+            vel_theta = msg.angular.z
 
         # dist_left = left_ticks / self.TICKS_PER_METER
         # dist_right = right_ticks / self.TICKS_PER_METER
