@@ -2,22 +2,31 @@
 <launch>
     <arg name="realsense" default="1"/>
     <arg name="zed2" default="0"/>
-    <arg name="lidar" default="0"/>
-    <arg name="simulation" default="1"/>
-    <arg name="gazebo_gui" default="1"/>
-    <arg name="gps" default="0"/>
+    <arg name="lidar" default="1"/>
+    <arg name="simulation" default="0"/>
+    <arg name="gazebo_gui" default="0"/>
+    <arg name="gps" default="1"/>
     <arg name="assigner" default="1"/>
     <include file="$(find bot_description)/launch/spawn.launch" if="$(arg simulation)">
         <arg name="gui" value="$(arg gazebo_gui)"/>
     </include>
+
+    <include file="$(find motion_plan)/launch/state_publisher.launch" unless="$(arg simulation)"/>
     <include file="$(find motion_plan)/launch/rtabmap_realsense.launch" if="$(arg realsense)"/>
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch" if="$(arg realsense)">
+        <arg name="depth_width" value="640"/>
+        <arg name="depth_height" value="480"/>
+        <arg name="depth_fps" value="30"/>
+        <arg name="camera" value="mrt/camera"/>
+        <!-- <arg name="filters" value="pointcloud"/> -->
+    </include>
     <include file="$(find motion_plan)/launch/lidar.launch" if="$(arg lidar)"/>
     <include file="$(find motion_plan)/launch/rtabmap_zed2.launch" if="$(arg zed2)"/>
     <include file="$(find motion_plan)/launch/move_base.launch">
         <arg name="simulation" value="$(arg simulation)"/>
     </include>
     <node name="assigner" pkg="motion_plan" type="assigner.py" if="$(arg assigner)"/>
-    <!-- <node name="odom_pub" pkg="motion_plan" type="odom_pub.py" unless="$(arg simulation)"/> -->
-    <!-- <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py" if="$(arg gps)"/> -->
+    <node name="odom_pub" pkg="motion_plan" type="odom_pub.py" unless="$(arg simulation)"/>
+    <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py" if="$(arg gps)"/>
 </launch>
 

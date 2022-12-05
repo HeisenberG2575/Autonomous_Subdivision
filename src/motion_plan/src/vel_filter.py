@@ -12,20 +12,20 @@ class filter():
     def __init__(self):
         rospy.init_node('vel_filter', anonymous=True)
         self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.callback)
-        self.pub = rospy.Publisher('/drive_msg',drive_msg,queue_size=10)
+        self.pub = rospy.Publisher('/rover/drive_directives',drive_msg,queue_size=10)
         rospy.spin()
 
     def callback(self, data):
         drive = drive_msg()
         drive.mode = "autonomous"
-        data.angular.z = max(data.angular.z, MAX_ANGULAR)
-        data.linear.z = max(data.linear.z, MAX_LINEAR)
-        if abs(data.angular.z) > 0.1 or abs(data.linear.x)<abs(data.angular.z):
+        data.angular.z = min(data.angular.z, MAX_ANGULAR)
+        data.linear.z = min(data.linear.z, MAX_LINEAR)
+        if abs(data.angular.z) > 0.15 or abs(data.linear.x) + 0.05 <abs(data.angular.z):
             drive.direction = "anticlockwise" if data.angular.z>0 else "clockwise"
-            drive.speed = 127*abs(data.angular.z)/MAX_ANGULAR
+            drive.speed = 45*abs(data.angular.z)/MAX_ANGULAR
         else :
             drive.direction = "forward" if data.linear.x>0 else "backward"
-            drive.speed = 127*abs(data.linear.x)/MAX_LINEAR
+            drive.speed = 45*abs(data.linear.x)/MAX_LINEAR
         self.pub.publish(drive)
 
 if __name__ == '__main__':

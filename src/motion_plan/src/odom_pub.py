@@ -23,7 +23,7 @@ ROOT_LINK = "root_link"
 class EncoderOdom:
     def __init__(self):
         rospy.init_node('odom_pub', anonymous=True)
-        self.sub = rospy.Subscriber('/cmd_vel_filtered', Twist, self.vel_update)
+        self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.vel_update)
         self.BASE_WIDTH = BASE_WIDTH
         self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=10)
         self.cur_x = 0
