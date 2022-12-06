@@ -9,6 +9,7 @@ This workspace contains a gazebo environment and a bot which can be used for tes
 - Various dependencies of ROS such as Rviz, Robot State Publisher. (if you have installed full desktop version of ROS, you already have them by default)
 - python3-pip
 - python-is-python3
+
 Use ros_install.sh script if you haven't installed these.
 
 ## To run the files on your system:
