@@ -29,7 +29,7 @@ class EncoderOdom:
         rospy.init_node("odom_pub", anonymous=True)
         self.sub = rospy.Subscriber("/rover/drive_directives", drive_msg, self.vel_update)
         self.BASE_WIDTH = BASE_WIDTH
-        self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
+        self.odom_pub = rospy.Publisher("/odometry/filtered", Odometry, queue_size=10)
         self.cur_x = 0
         self.cur_y = 0
         self.cur_theta = 0.0

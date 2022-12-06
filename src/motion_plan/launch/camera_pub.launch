@@ -1,0 +1,8 @@
+
+<launch>
+    <node name="image_pub" pkg="motion_plan" type="image_pub.py"/>
+    <node name="image_pub2" pkg="motion_plan" type="image_pub.py">
+        <rosparam param="camera_name">usb-Sonix_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0</rosparam>
+        <rosparam param="camera_id">2</rosparam>
+    </node>
+</launch>
