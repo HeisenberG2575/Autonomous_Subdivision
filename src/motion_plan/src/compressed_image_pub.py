@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Import the necessary libraries
 import rospy  # Python library for ROS
-from sensor_msgs.msg import Image  # Image is the message type
+from sensor_msgs.msg import CompressedImage  # Image is the message type
 from std_msgs.msg import Header
 from cv_bridge import CvBridge  # Package to convert between ROS and OpenCV Images
 import cv2  # OpenCV library
@@ -28,7 +28,7 @@ class ImagePublisher:
             # cv2.imshow("frame", frame)
             # cv2.waitKey(10)
             #### Create CompressedIamge ####
-            ros_img= CompressedImage()
+            ros_img = CompressedImage()
             ros_img.header.seq = self.counter
             ros_img.header.frame_id = FRAME
             ros_img.header.stamp = rospy.Time.now()
