@@ -5,6 +5,7 @@ from sensor_msgs.msg import CompressedImage  # Image is the message type
 from std_msgs.msg import Header
 from cv_bridge import CvBridge  # Package to convert between ROS and OpenCV Images
 import cv2  # OpenCV library
+import numpy as np
 import os, re
 
 FRAME='camera_link_optical'
