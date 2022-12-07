@@ -1,4 +1,3 @@
-<!-- -->
 <launch>
   <!-- Convenience launch file to launch odometry, rtabmap and rtabmapviz nodes at once -->
 
@@ -84,8 +83,8 @@
   <arg name="rgb_image_transport"     default="compressed"/>    <!-- Common types: compressed, theora (see "rosrun image_transport list_transports") -->
   <arg name="depth_image_transport"   default="compressedDepth"/>  <!-- Depth compatible types: compressedDepth (see "rosrun image_transport list_transports") -->
    
-  <arg name="subscribe_scan"          default="false"/>
-  <arg name="scan_topic"              default="/scan"/>
+  <arg name="subscribe_scan"          default="true"/>
+  <arg name="scan_topic"              default="/mrt/laser/scan"/>
   <arg name="subscribe_scan_cloud"    default="false"/>
   <arg name="scan_cloud_topic"        default="/mrt/camera/point_cloud/cloud_registered"/>
   <arg name="subscribe_scan_descriptor" default="false"/>
@@ -100,7 +99,7 @@
   <arg name="gen_depth_fill_iterations"  default="1" />
   <arg name="gen_depth_fill_holes_error" default="0.1" />
    
-  <arg name="visual_odometry"          default="false"/>          <!-- Launch rtabmap visual odometry node -->
+  <arg name="visual_odometry"          default="true"/>          <!-- Launch rtabmap visual odometry node -->
   <arg name="icp_odometry"             default="false"/>         <!-- Launch rtabmap icp odometry node -->
   <arg name="odom_topic"               default="vo_odom"/>          <!-- Odometry topic name /gazebo/controllers/diff_drive/odom or /mrt/camera/odom-->
   <arg name="slam_odom_topic"          default="/odometry/filtered"/> <!-- Odometry topic name for slam /rtabmap/odom/filtered-->
