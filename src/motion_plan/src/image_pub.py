@@ -23,13 +23,18 @@ class ImagePublisher:
         self.pub = rospy.Publisher(f'/mrt/camera{self.id}/image_raw', Image, queue_size=10)
         while not rospy.is_shutdown():
             ret, frame = self.vid.read()
+            if not ret:
+                print("ret == False")
             # print(ret)
+            frame=cv2.resize(frame,(256,144))
             # cv2.imshow("frame", frame)
             # cv2.waitKey(10)
             ros_img = self.br.cv2_to_imgmsg(frame,header=Header(seq=self.counter,stamp=rospy.Time.now(),frame_id=FRAME))
             self.pub.publish(ros_img)
             rate.sleep()
             self.counter+=1
+        self.vid.release()
+        # cv2.destroyAllWindows()
 
     def get_camera(self):
         self.name = rospy.get_param("~camera_name", "usb-046d_C270_HD_WEBCAM_EA2B8C60-video-index0")
