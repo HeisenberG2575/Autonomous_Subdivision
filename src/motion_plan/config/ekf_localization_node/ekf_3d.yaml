@@ -33,23 +33,23 @@ odom0_nodelay: false
 odom0_differential: false
 odom0_relative: true
 
-# odom1: /zed2/odom
-# odom1_config: [false, false, false,
-#                 true, false, false,
-#                 true,  false, false,
-#                 false, false, true,
-#                 false, false, false]
-# odom1_queue_size: 3
-# odom1_rejection_threshold: 15
-# odom1_nodelay: false
+odom1: /rtabmap/vo_odom
+odom1_config: [false, false, false,
+                true, false, false,
+                true,  false, false,
+                false, false, true,
+                false, false, false]
+odom1_queue_size: 3
+odom1_rejection_threshold: 15
+odom1_nodelay: false
 
 
 imu0: imu/data
 imu0_config: [false, false, false,
-              false,  false,  false,
+              true,  true,  true,
               false, false, false,
               true,  true,  true,
-              true,  false, false]
+              false,  false, false]
 imu0_nodelay: false
 imu0_differential: false
 imu0_relative: false
