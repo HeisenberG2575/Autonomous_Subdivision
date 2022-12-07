@@ -3,7 +3,7 @@
     <arg name="realsense" default="1"/>
     <arg name="zed2" default="0"/>
     <arg name="lidar" default="1"/>
-    <arg name="simulation" default="0"/>
+    <arg name="simulation" default="1"/>
     <arg name="gazebo_gui" default="0"/>
     <arg name="gps" default="1"/>
     <arg name="assigner" default="1"/>
