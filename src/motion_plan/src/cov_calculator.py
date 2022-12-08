@@ -52,8 +52,8 @@ class sensor_data_pub:
     def listener(self):
         rospy.init_node("Sensor_data")
         rospy.Subscriber("IMU", Float32MultiArray, self.fetchIMUData)
-        # rospy.Subscriber("Acc", Float64MultiArray, self.fetchAccData)
-        # rospy.Subscriber("LatLon", Float64MultiArray, self.fetchGPSData)
+        rospy.Subscriber("Acc", Float64MultiArray, self.fetchAccData)
+        rospy.Subscriber("LatLon", Float64MultiArray, self.fetchGPSData)
         rospy.spin()
 
 
