@@ -63,7 +63,7 @@ class EncoderOdom:
             if msg.direction in ["forward", "backward"]:
                 vel_x = speed if msg.direction == "forward" else -speed
             else:
-                vel_theta = speed/self.BASE_WIDTH
+                vel_theta = speed/self.BASE_WIDTH if msg.direction == "anticlockwise" else -speed/self.BASE_WIDTH
 
         # dist_left = left_ticks / self.TICKS_PER_METER
         # dist_right = right_ticks / self.TICKS_PER_METER

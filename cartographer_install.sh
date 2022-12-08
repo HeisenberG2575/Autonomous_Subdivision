@@ -12,9 +12,9 @@ wstool update -t src
 
 sudo rosdep init
 rosdep update
+sed -i '/libabsl-dev/d' src/cartographer/package.xml
 rosdep install --from-paths src --ignore-src --rosdistro=${ROS_DISTRO} -y
 
-sed -i '/libabsl-dev/d' src/cartographer/package.xml
 sudo apt-get remove ros-${ROS_DISTRO}-abseil-cpp
 src/cartographer/scripts/install_abseil.sh
 
