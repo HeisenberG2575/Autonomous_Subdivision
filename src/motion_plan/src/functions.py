@@ -312,10 +312,11 @@ class client:
         self.pcd = convertCloudFromRosToOpen3d(data)
         self.pcd_width = data.width
 
-    def get_orientation(self, corners, visualize=False):
-        print("corners", corners)
-        pcd = self.crop_pcd(corners[:4])
-        z = np.median(np.asarray(pcd.points), axis=0)[2]  # get median z TODO
+    def get_orientation(self, corners, z=None, visualize=False):
+        # print("corners", corners)
+        if z is None:
+            z = np.median(np.asarray(pcd.points), axis=0)[2]  # get median z TODO
+        pcd = self.crop_pcd(corners[:4], z=z)
         # TODO add this to completed?
         # ps.append(downpcd.get_centre())
 
@@ -347,9 +348,12 @@ class client:
         #                                   up=[-0.0694, -0.9768, 0.2024],
         #                                   point_show_normal=True)
 
-        plane_model, _ = pcd.segment_plane(
-            distance_threshold=0.01, ransac_n=3, num_iterations=500
-        )
+        try:
+            plane_model, _ = pcd.segment_plane(
+                distance_threshold=0.01, ransac_n=3, num_iterations=500
+            )
+        except:
+            return 0
         [a, b, c, d] = plane_model
         a, b, c, d = (-a, -b, -c, -d) if d > 0 else (a, b, c, d)
         # print("abcd:", a,b,c,d)
@@ -358,7 +362,7 @@ class client:
 
         return theta
 
-    def crop_pcd(self, corners):
+    def crop_pcd(self, corners, z):
         """Accepts 3D points and returns a cropped pcd
 
         :corners: shape (n,3)
@@ -376,8 +380,8 @@ class client:
         # the polygon vertices and the min value the minimum Z of the
         # polygon vertices.
         vol.orthogonal_axis = "Z"
-        vol.axis_max = np.max(bounding_polygon[:, 2]) + 0.2
-        vol.axis_min = np.min(bounding_polygon[:, 2]) - 0.2
+        vol.axis_max = max(z,np.max(bounding_polygon[:, 2])) + 0.2
+        vol.axis_min = min(z,np.min(bounding_polygon[:, 2])) - 0.2
 
         # Set all the Z values to 0 (they aren't needed since we specified what they
         # should be using just vol.axis_max and vol.axis_min).
@@ -530,7 +534,7 @@ class client:
             # print("Corners 3d",corners)
 
             if far == False:
-                orient = self.get_orientation(corners) * 180 / np.pi
+                orient = self.get_orientation(corners, z=z) * 180 / np.pi
                 # print(orient)
         if far == True:
             orient = 0
@@ -546,15 +550,18 @@ class client:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
-        # cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
+        cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
         # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
         return found, pos, orient
 
     def get_depth(self, x, y):
-        gen = pc2.read_points(
-            self.roscloud, field_names="z", skip_nans=False, uvs=[(int(x), int(y))]
-        )  # Questionable
-        return next(gen)[0]
+        # print(f"x: {x}, y: {y}")
+        xyz_array = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
+        points = xyz_array[:,0:2]
+        tree = cKDTree(points)
+        idx = tree.query((x,y))[1]
+        depth = xyz_array[idx,2]
+        return depth#next(gen)[0]
 
     def lidar_callback(self, data):
         self.lidar_data = data

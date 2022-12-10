@@ -2,6 +2,7 @@
 
 import numpy as np
 import rospy
+import rospkg
 import cv2
 import open3d as o3d
 from image_geometry import PinholeCameraModel
@@ -9,13 +10,18 @@ from ctypes import *  # convert float to uint32
 from cv_bridge import CvBridge
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Image, LaserScan, PointCloud2, PointField, CameraInfo
+from scipy.spatial import cKDTree
+import ros_numpy
+
+
+path = rospkg.RosPack().get_path("motion_plan")
 
 
 class PCD_checker:
 
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw"):
-        rospy.init_node('pcd_checker')
+        self.br = CvBridge()
         rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
@@ -24,9 +30,8 @@ class PCD_checker:
         self.info_sub = rospy.Subscriber(
             "/mrt/camera/color/camera_info", CameraInfo, self.info_callback
         )
-        # Used to convert between ROS and OpenCV images
-        self.br = CvBridge()
-        rospy.spin()
+        rospy.Rate(5).sleep()
+        # rospy.spin()
 
     def cam_callback(self, data):
         # Output debugging information to the terminal
@@ -44,10 +49,13 @@ class PCD_checker:
         self.pcd_width = data.width
 
     def get_depth(self, x, y):
-        gen = pc2.read_points(
-            self.roscloud, field_names="z", skip_nans=False, uvs=[(x, y)]
-        )  # Questionable
-        return next(gen)[0]
+        # print(f"x: {x}, y: {y}")
+        xyz_array = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
+        points = xyz_array[:,0:2]
+        tree = cKDTree(points)
+        idx = tree.query((x,y))[1]
+        depth = xyz_array[idx,2]
+        return depth#next(gen)[0]
 
     def info_callback(self, data):
         self.model = PinholeCameraModel()
@@ -72,15 +80,17 @@ class PCD_checker:
         pt = [
             el * depth for el in ray_z
         ]  # multiply the ray by the depth; its Z-component should now equal the depth value
+
         # print("3D pt: ", pt)
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
         return pt
 
-    def get_orientation(self, corners, visualize=False):
-        print("corners", corners)
-        pcd = self.crop_pcd(corners[:4])
-        z = np.median(np.asarray(pcd.points), axis=0)[2]  # get median z TODO
+    def get_orientation(self, corners, z=None, visualize=False):
+        # print("corners", corners)
+        if z is None:
+            z = np.median(np.asarray(pcd.points), axis=0)[2]  # get median z TODO
+        pcd = self.crop_pcd(corners[:4], z=z)
         # TODO add this to completed?
         # ps.append(downpcd.get_centre())
 
@@ -112,9 +122,12 @@ class PCD_checker:
         #                                   up=[-0.0694, -0.9768, 0.2024],
         #                                   point_show_normal=True)
 
-        plane_model, _ = pcd.segment_plane(
-            distance_threshold=0.01, ransac_n=3, num_iterations=500
-        )
+        try:
+            plane_model, _ = pcd.segment_plane(
+                distance_threshold=0.01, ransac_n=3, num_iterations=500
+            )
+        except:
+            return 0
         [a, b, c, d] = plane_model
         a, b, c, d = (-a, -b, -c, -d) if d > 0 else (a, b, c, d)
         # print("abcd:", a,b,c,d)
@@ -123,7 +136,7 @@ class PCD_checker:
 
         return theta
 
-    def crop_pcd(self, corners):
+    def crop_pcd(self, corners, z):
         """Accepts 3D points and returns a cropped pcd
 
         :corners: shape (n,3)
@@ -141,8 +154,8 @@ class PCD_checker:
         # the polygon vertices and the min value the minimum Z of the
         # polygon vertices.
         vol.orthogonal_axis = "Z"
-        vol.axis_max = np.max(bounding_polygon[:, 2]) + 0.2
-        vol.axis_min = np.min(bounding_polygon[:, 2]) - 0.2
+        vol.axis_max = max(z,np.max(bounding_polygon[:, 2])) + 0.2
+        vol.axis_min = min(z,np.min(bounding_polygon[:, 2])) - 0.2
 
         # Set all the Z values to 0 (they aren't needed since we specified what they
         # should be using just vol.axis_max and vol.axis_min).
@@ -170,6 +183,7 @@ class PCD_checker:
     def arrow_detect(self, far=True):
         # Arrow detection
         img = self.frame.copy()
+        # print("img dim: ", img.shape)
         orig_img = img.copy()
         found = False
         orient = None
@@ -179,8 +193,8 @@ class PCD_checker:
         contours, _ = cv2.findContours(
             preprocess(img), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
         )[-2:]
-        # cv2.imshow("Image", preprocess(img))
-        # cv2.waitKey(0)
+        cv2.imshow("Image", preprocess(img))
+        cv2.waitKey(0)
         # template = cv2.imread("arrow.jpeg")
         for cnt in contours:
             if cv2.contourArea(cnt) < 150:
@@ -202,13 +216,13 @@ class PCD_checker:
                         arrow_tail[0] - arrow_tip[0] == 0
                     ):  # to avoid division by 0 in next step
                         continue
-                    print(
-                        "tip-tail tan angle: ",
-                        abs(
-                            float(arrow_tail[1] - arrow_tip[1])
-                            / (arrow_tail[0] - arrow_tip[0])
-                        ),
-                    )
+                    # print(
+                    #     "tip-tail tan angle: ",
+                    #     abs(
+                    #         float(arrow_tail[1] - arrow_tip[1])
+                    #         / (arrow_tail[0] - arrow_tip[0])
+                    #     ),
+                    # )
                     # Check that tan of angle of the arrow in the image from horizontal is less than 0.2(we are expecting nearly horizontal arrows)(atan(0.2) = 11.31)
                     if (
                         abs(
@@ -225,6 +239,7 @@ class PCD_checker:
                     direction = dirct  # TODO multiple arrow case
                     found = True
                     bounding_box = cv2.boundingRect(cnt)
+                    # print(bounding_box)
                     cv2.drawContours(img, [cnt], -1, (0, 255, 0), 2)
                     cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
                     cv2.circle(img, arrow_tip, 3, (0, 0, 255), cv2.FILLED)
@@ -289,13 +304,13 @@ class PCD_checker:
             ]
             x, y, z = self.pixel_to_3d(int(x + w / 2), int(y + h / 2))
             x, y, z = z, -x, y
-            print("x,y,z: ", x, y, z)
+            # print("x,y,z: ", x, y, z)
             pos = x, y, z
             # print("Point",points)
             # print("Corners 3d",corners)
 
             if far == False:
-                orient = self.get_orientation(corners, visualize=True) * 180 / np.pi
+                orient = self.get_orientation(corners,z=z, visualize=False) * 180 / np.pi
                 # print(orient)
         if far == True:
             orient = 0
@@ -311,19 +326,10 @@ class PCD_checker:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
-        # cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
+        cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
         # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
         return found, pos, orient
 
-
-if __name__ == "__main__":
-    try:
-        checker = PCD_checker()
-        while not rospy.is_shutdown():
-            found, pos, orient = checker.arrow_detect(far=False)
-            print("Found: ", found)
-    except rospy.ROSInterruptException:
-        print("Closing")
 
 
 
@@ -708,4 +714,16 @@ def arrow_test():
                 cv2.polylines(img, [rect], True, (0, 0, 255), 2)
     cv2.imshow("Image", img)
     cv2.waitKey(0)
+
+if __name__ == "__main__":
+    try:
+        rospy.init_node('pcd_checker')
+        checker = PCD_checker()
+        rate = rospy.Rate(2)
+        while not rospy.is_shutdown():
+            found, pos, orient = checker.arrow_detect(far=False)
+            print("Found: ", found)
+            rate.sleep()
+    except rospy.ROSInterruptException:
+        print("Closing")
 
