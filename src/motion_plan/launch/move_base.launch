@@ -3,8 +3,7 @@
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>-->
   <arg name="cmd_vel_topic" default="/cmd_vel" />
   <arg name="odom_topic" default="odom" />
-  <arg name="map_topic" default="/rtabmap/grid_map" />
-  <arg name="scan_topic"  default="/mrt/laser/scan"/>
+  <arg name="map_topic" default="/map" />
   <arg name="scan_topic_filtered" default="/scan_filtered" />
   <arg name="base_frame"  default="root_link"/>
   <arg name="global_frame"  default="map"/>
@@ -18,8 +17,6 @@
   <node ns="move_base_node/local_costmap" name="voxel_grid_throttle" pkg="topic_tools" 
       type="throttle" args="messages voxel_grid 3.0 voxel_grid_throttled" />
 
-  <node name="rviz" pkg="rviz" type="rviz" 
-      args="-d $(find motion_plan)/rviz/slam.rviz -f map" output="screen"/>
 
   <!-- move_base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
@@ -49,9 +46,5 @@
   <node name="vel_filter_sim" pkg="motion_plan" type="vel_filter_sim.py" if="$(arg simulation)"/>
   <node name="vel_filter" pkg="motion_plan" type="vel_filter.py" unless="$(arg simulation)"/>
 
-  <node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
-    <rosparam command="load" file="$(find motion_plan)/config/lidar_config.yaml"/>
-    <remap from="scan" to="$(arg scan_topic)"/>
-  </node>
 
 </launch>

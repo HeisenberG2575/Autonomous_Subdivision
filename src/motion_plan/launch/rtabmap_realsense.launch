@@ -104,7 +104,7 @@
   <arg name="odom_topic"               default="vo_odom"/>          <!-- Odometry topic name /gazebo/controllers/diff_drive/odom or /mrt/camera/odom-->
   <arg name="slam_odom_topic"          default="/odometry/filtered"/> <!-- Odometry topic name for slam /rtabmap/odom/filtered-->
   <arg name="vo_frame_id"              default="odom"/> <!-- Visual/Icp odometry frame ID for TF , initially odom topic-->
-  <arg name="publish_tf_odom"          default="false"/>
+  <arg name="publish_tf_odom"          default="true"/>
   <arg name="odom_tf_angular_variance" default="1"/>             <!-- If TF is used to get odometry, this is the default angular variance -->
   <arg name="odom_tf_linear_variance"  default="1"/>             <!-- If TF is used to get odometry, this is the default linear variance -->
   <arg name="odom_args"                default=""/>              <!-- More arguments for odometry (overwrite same parameters in rtabmap_args) -->

@@ -552,7 +552,7 @@ class client:
 
     def get_depth(self, x, y):
         gen = pc2.read_points(
-            self.roscloud, field_names="z", skip_nans=False, uvs=[(x, y)]
+            self.roscloud, field_names="z", skip_nans=False, uvs=[(int(x), int(y))]
         )  # Questionable
         return next(gen)[0]
 

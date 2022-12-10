@@ -138,7 +138,7 @@ def main_node():
         if not found:
             nearby_goal = just_ahead(prev_x, prev_y, prev_q, off_dist=0.7 + 0.7 * i)
             my_client.send_goal(*nearby_goal, frame="map")
-            rospy.sleep(1.2)  # Sleep for 1-2s and let the bot move towards the goal
+            rospy.sleep(8.2)  # Sleep for 1-2s and let the bot move towards the goal
             i += 1
     # rate.sleep()
 

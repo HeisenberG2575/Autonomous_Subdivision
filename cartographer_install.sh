@@ -3,6 +3,7 @@
 source /opt/ros/noetic/setup.bash
 sudo apt-get update
 sudo apt-get install -y python3-wstool python3-rosdep ninja-build stow
+pip3 install sphinx
 
 mkdir cartographer_ws
 cd cartographer_ws

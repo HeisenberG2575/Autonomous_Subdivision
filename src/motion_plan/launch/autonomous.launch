@@ -14,12 +14,14 @@
     </include>
 
     <include file="$(find motion_plan)/launch/state_publisher.launch" unless="$(arg simulation)"/>
-    <include file="$(find motion_plan)/launch/rtabmap_realsense.launch" if="$(eval arg('realsense') and arg('rtabmap'))"/>
+    <include file="$(find motion_plan)/launch/rtabmap_realsense.launch" if="$(eval arg('realsense') and arg('rtabmap'))">
+        <remap from="/rtabmap/grid_map" to="/map"/>
+    </include>
     <include file="$(find motion_plan)/launch/cartographer_3d.launch" unless="$(arg rtabmap)"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch" if="$(arg realsense)">
         <arg name="depth_width" value="640"/>
         <arg name="depth_height" value="480"/>
-        <arg name="depth_fps" value="30"/>
+        <arg name="depth_fps" value="6"/>
         <arg name="camera" value="mrt/camera"/>
         <arg name="filters" value="pointcloud"/>
     </include>
@@ -32,6 +34,10 @@
     <node name="odom_pub" pkg="motion_plan" type="odom_pub.py" unless="$(arg simulation)">
         <remap from="/odometry/filtered" to="/odom" if="$(arg gps)" />
     </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" 
+      args="-d $(find motion_plan)/rviz/slam.rviz -f map" output="screen" if="$(arg simulation)"/>
+
     <node name="imu_gps_publisher" pkg="motion_plan" type="imu_gps_publisher.py" if="$(arg gps)"/>
     <include file="$(find motion_plan)/launch/odometry.launch" if="$(arg gps)"/>
 </launch>
