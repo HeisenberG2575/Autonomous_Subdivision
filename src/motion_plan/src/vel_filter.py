@@ -19,10 +19,10 @@ class filter():
         drive = drive_msg()
         drive.mode = "autonomous"
         data.angular.z = min(data.angular.z, MAX_ANGULAR)
-        data.linear.z = min(data.linear.z, MAX_LINEAR)
+        data.linear.x = min(data.linear.x, MAX_LINEAR)
         if abs(data.angular.z) > 0.15 or abs(data.linear.x) + 0.05 <abs(data.angular.z):
             drive.direction = "anticlockwise" if data.angular.z>0 else "clockwise"
-            drive.speed = 100*abs(data.angular.z)/MAX_ANGULAR
+            drive.speed = 50*abs(data.angular.z)/MAX_ANGULAR
         else :
             drive.direction = "forward" if data.linear.x>0 else "backward"
             drive.speed = 100*abs(data.linear.x)/MAX_LINEAR
