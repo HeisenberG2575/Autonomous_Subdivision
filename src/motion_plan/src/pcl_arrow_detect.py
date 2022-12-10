@@ -12,6 +12,7 @@ import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
+import message_filters
 
 
 path = rospkg.RosPack().get_path("motion_plan")
@@ -24,10 +25,12 @@ class ArrowDetector:
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
         self.pcd = None
-        rospy.Subscriber(ros_image, Image, self.cam_callback)
+        image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
+        cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
+        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,cloud_sub], 10, 0.15)
+        sync_sub.registerCallback(depth_cam_callback)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
             info_topic, CameraInfo, self.info_callback
@@ -35,20 +38,16 @@ class ArrowDetector:
         rospy.Rate(5).sleep()
         # rospy.spin()
 
-    def cam_callback(self, data):
-        # Output debugging information to the terminal
-        # rospy.loginfo("receiving video frame")
-
-        # Convert ROS Image message to OpenCV image
-        current_frame = self.br.imgmsg_to_cv2(data)
+    def depth_cam_callback(self, img_data, cloud_data):
+        current_frame = self.br.imgmsg_to_cv2(img_data)
         self.frame = current_frame
 
-    def pc_callback(self, data):
-        self.timestamp = data.header.stamp
-        # print('pcd height: ',data.height, 'width: ', data.width )
-        self.roscloud = data
-        self.pcd = convertCloudFromRosToOpen3d(data)
-        self.pcd_width = data.width
+        self.timestamp = cloud_data.header.stamp
+        # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
+        self.roscloud = cloud_data
+        self.pcd = convertCloudFromRosToOpen3d(cloud_data)
+        # self.pcd_width = cloud_data.width
+        # # For unordered, height = 1
 
     def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
