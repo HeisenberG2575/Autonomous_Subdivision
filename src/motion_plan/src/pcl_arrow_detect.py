@@ -9,7 +9,7 @@ from image_geometry import PinholeCameraModel
 from ctypes import *  # convert float to uint32
 from cv_bridge import CvBridge
 import sensor_msgs.point_cloud2 as pc2
-from sensor_msgs.msg import Image, LaserScan, PointCloud2, PointField, CameraInfo
+from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 
@@ -17,18 +17,20 @@ import ros_numpy
 path = rospkg.RosPack().get_path("motion_plan")
 
 
-class PCD_checker:
+class ArrowDetector:
 
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
-                 ros_image="/mrt/camera/color/image_raw"):
+                 ros_image="/mrt/camera/color/image_raw",
+                 info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
+        self.pcd = None
         rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
         rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
-            "/mrt/camera/color/camera_info", CameraInfo, self.info_callback
+            info_topic, CameraInfo, self.info_callback
         )
         rospy.Rate(5).sleep()
         # rospy.spin()
