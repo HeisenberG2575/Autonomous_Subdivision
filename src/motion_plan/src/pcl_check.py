@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+
 import numpy as np
 import rospy
 import cv2
 import open3d as o3d
 from image_geometry import PinholeCameraModel
 from ctypes import *  # convert float to uint32
+from cv_bridge import CvBridge
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Image, LaserScan, PointCloud2, PointField, CameraInfo
 
@@ -21,6 +24,17 @@ class PCD_checker:
         self.info_sub = rospy.Subscriber(
             "/mrt/camera/color/camera_info", CameraInfo, self.info_callback
         )
+        # Used to convert between ROS and OpenCV images
+        self.br = CvBridge()
+        rospy.spin()
+
+    def cam_callback(self, data):
+        # Output debugging information to the terminal
+        # rospy.loginfo("receiving video frame")
+
+        # Convert ROS Image message to OpenCV image
+        current_frame = self.br.imgmsg_to_cv2(data)
+        self.frame = current_frame
 
     def pc_callback(self, data):
         self.timestamp = data.header.stamp

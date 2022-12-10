@@ -49,9 +49,11 @@ class client:
         self.frame = None
         self.lidar_data = None
         self.pcd = None
-        rospy.Subscriber("/rtabmap/grid_map", OccupancyGrid, self.mapCallBack)
-        rospy.Subscriber("/mrt/laser/scan", LaserScan, self.lidar_callback)
+        rospy.Subscriber("/map", OccupancyGrid, self.mapCallBack)
+        rospy.Subscriber("/scan_filtered", LaserScan, self.lidar_callback)
         rospy.Subscriber("/mrt/camera/color/image_raw", Image, self.cam_callback)
+        # Used to convert between ROS and OpenCV images
+        self.br = CvBridge()
         rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
         rospy.Subscriber("/mrt/camera/depth/color/points", PointCloud2, self.pc_callback)
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=15)
@@ -295,14 +297,12 @@ class client:
         return pt
 
     def cam_callback(self, data):
-        # Used to convert between ROS and OpenCV images
-        br = CvBridge()
 
         # Output debugging information to the terminal
         # rospy.loginfo("receiving video frame")
 
         # Convert ROS Image message to OpenCV image
-        current_frame = br.imgmsg_to_cv2(data)
+        current_frame = self.br.imgmsg_to_cv2(data)
         self.frame = current_frame
 
     def pc_callback(self, data):
