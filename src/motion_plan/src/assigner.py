@@ -29,7 +29,11 @@ def main_node():
             else:
                 rospy.loginfo("Failed")
             break
+        count = 0
         found, pos, orient = my_client.arrow_detect(far=True)
+        while not found and count < 5:
+            count += 1
+            found, pos, orient = my_client.arrow_detect(far=True)
         if found:
             # TODO reduce conversions
             orient = orient + 90 if orient < 0 else orient - 90
