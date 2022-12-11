@@ -28,7 +28,7 @@ obstacle_layer:
 
   # Definition of the sensors/observation sources
   observation_sources: scan
-  scan: {sensor_frame: sensor_laser, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+  scan: {sensor_frame: sensor_laser, data_type: LaserScan, topic: scan_filtered, marking: true, clearing: true}
 
 #  # Parameters of the source: laser_scan_right
 #  laser_scan_right:

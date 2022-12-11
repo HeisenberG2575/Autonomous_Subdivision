@@ -1,6 +1,6 @@
 # http://wiki.ros.org/imu_filter_madgwick#Parameters
 
-gain: 0.1
+gain: 0.041
 zeta: 0.0
 mag_bias_x: 0.0
 mag_bias_y: 0.0

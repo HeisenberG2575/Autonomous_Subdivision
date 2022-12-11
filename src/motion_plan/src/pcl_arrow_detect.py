@@ -13,6 +13,7 @@ from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
+import pyrealsense2 as rs
 
 
 path = rospkg.RosPack().get_path("motion_plan")
@@ -20,47 +21,58 @@ path = rospkg.RosPack().get_path("motion_plan")
 
 class ArrowDetector:
 
-    def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
+    def __init__(self, depth_image="/mrt/camera/depth/image_rect_raw",
                  ros_image="/mrt/camera/color/image_raw",
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
         self.pcd = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
-        rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
-        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,cloud_sub], 10, 0.15)
+        depth_sub = message_filters.Subscriber(ros_cloud, Image)
+        rospy.wait_for_message(depth_image, Image, timeout=5)
+        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depth_sub], 10, 0.15)
         sync_sub.registerCallback(depth_cam_callback)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
             info_topic, CameraInfo, self.info_callback
         )
+
+        self.temporal = rs.temporal_filter()
+        self.hole_filling = rs.hole_filling_filter()
         rospy.Rate(5).sleep()
         # rospy.spin()
 
-    def depth_cam_callback(self, img_data, cloud_data):
+    def depth_cam_callback(self, img_data, depth_data):
         current_frame = self.br.imgmsg_to_cv2(img_data)
         self.frame = current_frame
+        self.frame = self.hole_filling(self.frame)
+        self.frame = self.temporal(self.frame)
 
         self.timestamp = cloud_data.header.stamp
+        rgbd = o3d.geometry.create_rgbd_image_from_color_and_depth(color, depth, convert_rgb_to_intensity=False)
+        intrinsics = o3d.camera.PinholeCameraIntrinsic(self.K[0], self.K[4], self.K[2], self.K[5])
+        self.pcd = o3d.geometry.create_point_cloud_from_rgbd_image(rgbd, intrinsics)
+        self.numpy_pcd = np.asarray(self.pcd.points)
+
         # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
-        self.roscloud = cloud_data
-        self.pcd = convertCloudFromRosToOpen3d(cloud_data)
+        # self.roscloud = cloud_data
+        # self.pcd = convertCloudFromRosToOpen3d(cloud_data)
         # self.pcd_width = cloud_data.width
         # # For unordered, height = 1
 
     def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
-        xyz_array = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
-        points = xyz_array[:,0:2]
+        # xyz_array = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
+        points = numpy_pcd[:,0:2]
         tree = cKDTree(points)
         idx = tree.query((x,y))[1]
-        depth = xyz_array[idx,2]
+        depth = numpy_pcd[idx,2]
         return depth#next(gen)[0]
 
     def info_callback(self, data):
         self.model = PinholeCameraModel()
         self.model.fromCameraInfo(data)
+        self.K = data.K
         self.info_sub.unregister()  # Only subscribe once
 
     def pixel_to_3d(self, x, y):
