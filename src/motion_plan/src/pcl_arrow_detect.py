@@ -21,7 +21,7 @@ path = rospkg.RosPack().get_path("motion_plan")
 
 class ArrowDetector:
 
-    def __init__(self, depth_image="/mrt/camera/depth/image_rect_raw",
+    def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw",
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
@@ -29,36 +29,32 @@ class ArrowDetector:
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         depth_sub = message_filters.Subscriber(ros_cloud, Image)
-        rospy.wait_for_message(depth_image, Image, timeout=5)
+        rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
         sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depth_sub], 10, 0.15)
-        sync_sub.registerCallback(depth_cam_callback)
+        sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
             info_topic, CameraInfo, self.info_callback
         )
 
-        self.temporal = rs.temporal_filter()
-        self.hole_filling = rs.hole_filling_filter()
         rospy.Rate(5).sleep()
         # rospy.spin()
 
-    def depth_cam_callback(self, img_data, depth_data):
+    def depth_cam_callback(self, img_data, cloud_data):
         current_frame = self.br.imgmsg_to_cv2(img_data)
         self.frame = current_frame
-        self.frame = self.hole_filling(self.frame)
-        self.frame = self.temporal(self.frame)
 
-        self.timestamp = cloud_data.header.stamp
-        rgbd = o3d.geometry.create_rgbd_image_from_color_and_depth(color, depth, convert_rgb_to_intensity=False)
-        intrinsics = o3d.camera.PinholeCameraIntrinsic(self.K[0], self.K[4], self.K[2], self.K[5])
-        self.pcd = o3d.geometry.create_point_cloud_from_rgbd_image(rgbd, intrinsics)
-        self.numpy_pcd = np.asarray(self.pcd.points)
+        # self.timestamp = cloud_data.header.stamp
+        # rgbd = o3d.geometry.create_rgbd_image_from_color_and_depth(color, depth, convert_rgb_to_intensity=False)
+        # intrinsics = o3d.camera.PinholeCameraIntrinsic(self.K[0], self.K[4], self.K[2], self.K[5])
+        # self.pcd = o3d.geometry.create_point_cloud_from_rgbd_image(rgbd, intrinsics)
+        # self.numpy_pcd = np.asarray(self.pcd.points)
 
         # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
-        # self.roscloud = cloud_data
-        # self.pcd = convertCloudFromRosToOpen3d(cloud_data)
-        # self.pcd_width = cloud_data.width
-        # # For unordered, height = 1
+        self.roscloud = cloud_data
+        self.pcd = convertCloudFromRosToOpen3d(cloud_data)
+        self.pcd_width = cloud_data.width
+        # For unordered, height = 1
 
     def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
@@ -193,7 +189,7 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
 
-    def arrow_detect(self, far=True):
+    def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
         img = self.frame.copy()
         # print("img dim: ", img.shape)
@@ -323,7 +319,7 @@ class ArrowDetector:
             # print("Corners 3d",corners)
 
             if far == False:
-                orient = self.get_orientation(corners,z=z, visualize=False) * 180 / np.pi
+                orient = self.get_orientation(corners,z=z, visualize=visualize) * 180 / np.pi
                 # print(orient)
         if far == True:
             orient = 0
@@ -338,8 +334,11 @@ class ArrowDetector:
         if found:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
+        if visualize:
+            cv2.imshow("frame", img)
+            cv2.waitKey(10)
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
-        cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
+        # cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
         # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
         return found, pos, orient
 
@@ -731,10 +730,10 @@ def arrow_test():
 if __name__ == "__main__":
     try:
         rospy.init_node('pcd_checker')
-        checker = PCD_checker()
+        checker = ArrowDetector()
         rate = rospy.Rate(2)
         while not rospy.is_shutdown():
-            found, pos, orient = checker.arrow_detect(far=False)
+            found, pos, orient = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
             rate.sleep()
     except rospy.ROSInterruptException:
