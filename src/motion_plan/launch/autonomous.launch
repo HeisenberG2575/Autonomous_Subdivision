@@ -15,7 +15,7 @@
 
     <include file="$(find motion_plan)/launch/state_publisher.launch" unless="$(arg simulation)"/>
     <include file="$(find motion_plan)/launch/rtabmap_realsense.launch" if="$(eval arg('realsense') and arg('rtabmap'))">
-        <remap from="/rtabmap/grid_map" to="/map"/>
+        <!-- <remap from="/rtabmap/grid_map" to="/map"/> -->
     </include>
     <include file="$(find motion_plan)/launch/cartographer_3d.launch" unless="$(arg rtabmap)"/>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch" if="$(arg realsense)">

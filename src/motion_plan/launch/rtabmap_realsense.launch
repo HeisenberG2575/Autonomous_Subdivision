@@ -52,6 +52,7 @@
   <arg unless="$(arg gdb)" name="launch_prefix" default=""/>
   <arg name="output"                  default="screen"/>        <!-- Control node output (screen or log) -->
   <arg name="publish_tf_map"          default="true"/>
+  <arg name="slam_map_topic"               default="/map" />
 
   <!-- if timestamps of the input topics are synchronized using approximate or exact time policy-->
   <arg     if="$(arg stereo)" name="approx_sync"  default="true"/>
@@ -376,6 +377,7 @@
       <remap from="odom_info"              to="odom_info"/>
       <remap from="odom"                   to="$(arg slam_odom_topic)"/>
       <remap from="imu"                    to="$(arg imu_topic)"/>
+      <remap from="/rtabmap/grid_map"                    to="$(arg slam_map_topic)"/>
       
       <!-- localization mode -->
       <param     if="$(arg localization)" name="Mem/IncrementalMemory" type="string" value="false"/>

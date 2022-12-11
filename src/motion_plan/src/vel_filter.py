@@ -18,8 +18,8 @@ class filter():
     def callback(self, data):
         drive = drive_msg()
         drive.mode = "autonomous"
-        data.angular.z = min(data.angular.z, MAX_ANGULAR)
-        data.linear.x = min(data.linear.x, MAX_LINEAR)
+        data.angular.z = min(abs(data.angular.z), MAX_ANGULAR)*np.sign(data.angular.z)
+        data.linear.x = min(abs(data.linear.x), MAX_LINEAR)*np.sign(data.linear.x)
         if abs(data.angular.z) > 0.15 or abs(data.linear.x) + 0.05 <abs(data.angular.z):
             drive.direction = "anticlockwise" if data.angular.z>0 else "clockwise"
             drive.speed = 50*abs(data.angular.z)/MAX_ANGULAR
