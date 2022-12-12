@@ -15,6 +15,8 @@ import ros_numpy
 import message_filters
 
 
+OFFSET = 30
+
 path = rospkg.RosPack().get_path("motion_plan")
 
 
@@ -85,8 +87,8 @@ class ArrowDetector:
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
         depth = self.get_depth(ray_z[0],ray_z[1])
-	ray_z[2]=depth
-	#pt = [
+        ray_z[2]=depth
+	    #pt = [
         #    el * depth for el in ray_z
         #]  # multiply the ray by the depth; its Z-component should now equal the depth value
 
@@ -206,9 +208,20 @@ class ArrowDetector:
             cv2.imshow("Image", preprocess(img))
             cv2.waitKey(0)
         # template = cv2.imread("arrow.jpeg")
+        max_cnt_area = -1
         for cnt in contours:
-            if cv2.contourArea(cnt) < 150:
+            cnt_area = cv2.contourArea(cnt)
+            # filtering using area
+            if cnt_area < 150:
                 continue
+            
+            # filtering using color of arrow
+            mask = np.zeros(img.shape, np.uint8)
+            cv2.drawContours(mask, [cnt], -1, 255, -1)
+            cnt_mean = cv2.mean(img, mask=mask)
+            if np.mean(cnt_mean) < 255 - OFFSET:
+                continue
+
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
             hull = cv2.convexHull(approx, returnPoints=False)
@@ -246,9 +259,14 @@ class ArrowDetector:
                     ##cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre
                     # theta = -(np.average([arrow_tail[0], arrow_tip[0]])/(np.shape(img)[0]) - 0.5)*45*2#linear estimate, assuming camera horizontal range from -45 to 45
                     ##theta not needed using pcd
-                    direction = dirct  # TODO multiple arrow case
+                    # In case of multiple arrows, max area cnt is taken
+                    if max_cnt_area < cnt_area:
+                        direction = dirct  
+                        max_cnt_area = cnt_area
+                        bounding_box = cv2.boundingRect(cnt)
+
                     found = True
-                    bounding_box = cv2.boundingRect(cnt)
+                    
                     # print(bounding_box)
                     cv2.drawContours(img, [cnt], -1, (0, 255, 0), 2)
                     cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
