@@ -31,7 +31,7 @@ def main_node():
             break
         count = 0
         found, pos, orient = my_client.arrow_detect(far=True)
-        while not found and count < 5:
+        while not found and count < 15:
             count += 1
             found, pos, orient = my_client.arrow_detect(far=True)
         if found:
@@ -44,7 +44,7 @@ def main_node():
                 np.cos(np.pi * orient / (2 * 180)),
             )
             posx, posy, q = my_client.bot_to_map(
-                pos[0], pos[1], q, frame="camera_link"
+                pos[0], pos[1], q, frame="mrt/camera_link"
             )  # map frame
             if my_client.is_complete(posx, posy, q):
                 rospy.loginfo(
@@ -62,18 +62,18 @@ def main_node():
                 # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                 x, y, q_p = my_client.bot_to_map(0, 0, (0, 0, 0, 1))  # bot location
                 success = my_client.send_goal(
-                    *my_client.find_off_goal(posx, posy, q=q_p, offset=(-1.5, 0, 0, 0)),
+                    *my_client.find_off_goal(posx, posy, q=q_p, offset=(-1.75, 0, 0, 0)),
                     frame="map"
                 )
                 rospy.sleep(1)
                 dist = norm([x - posx, y - posy])
                 while (
-                    success == False and dist > 1.75
+                    success == False and dist > 1.85
                 ):  # keep checking if we are moving correctly
                     dist = norm([x - posx, y - posy])
                     success = my_client.send_goal(
                         *my_client.find_off_goal(
-                            posx, posy, q=q_p, offset=(-1.5, 0, 0, 0)
+                            posx, posy, q=q_p, offset=(-1.75, 0, 0, 0)
                         ),
                         frame="map"
                     )
@@ -106,7 +106,7 @@ def main_node():
                     rospy.sleep(1)
                     success = my_client.move_to_goal(
                         *my_client.find_off_goal(
-                            posx, posy, q=q_p, offset=(-1.5, 0, 0, 0)
+                            posx, posy, q=q_p, offset=(-1.75, 0, 0, 0)
                         ),
                         frame="map"
                     )
@@ -123,17 +123,18 @@ def main_node():
                         np.cos(np.pi * orient / (2 * 180)),
                     )
                     posx, posy, q = my_client.bot_to_map(
-                        pos[0], pos[1], q, frame="camera_link"
+                        pos[0], pos[1], q, frame="mrt/camera_link"
                     )
                     # posx,posy, q = my_client.bot_to_map(0, 0, q)
                     my_client.add_arrow(
                         posx, posy, q, color=(0, 1, 0), pos_z=0.48
                     )  # Add Rviz arrow marker, map frame
                     success = my_client.move_to_off_goal(
-                        posx, posy, q=q, frame="map", off_dist=1.3
+                        posx, posy, q=q, frame="map", off_dist=1.5
                     )
                     if success == True:
-                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q, frame="camera_link"), color=(0,1,1))
+                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy,
+                        # q, frame="mrt/camera_link"), color=(0,1,1))
                         prev_x, prev_y, prev_q = posx, posy, q  # map frame
                         # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                         my_client.add_to_completed(posx, posy, q)

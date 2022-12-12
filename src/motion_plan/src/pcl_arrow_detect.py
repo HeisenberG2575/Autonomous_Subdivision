@@ -15,6 +15,8 @@ import ros_numpy
 import message_filters
 
 
+OFFSET = 30
+
 path = rospkg.RosPack().get_path("motion_plan")
 
 
@@ -62,6 +64,8 @@ class ArrowDetector:
         tree = cKDTree(points)
         idx = tree.query((x,y))[1]
         depth = numpy_pcd[idx,2]
+        pt = numpy_pcd[idx]
+        print(f"\npcl: {pt}")
         return depth#next(gen)[0]
 
     def info_callback(self, data):
@@ -76,7 +80,6 @@ class ArrowDetector:
         :returns: np.ndarray
         """
         # print(f'getting {x}, {y} pixel coordinates')
-        depth = self.get_depth(x, y)
         # print(depth)
         ray = self.model.projectPixelTo3dRay(
             (x, y)
@@ -85,14 +88,16 @@ class ArrowDetector:
             el / ray[2] for el in ray
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
+        depth = self.get_depth(ray_z[0],ray_z[1])
         pt = [
             el * depth for el in ray_z
         ]  # multiply the ray by the depth; its Z-component should now equal the depth value
+        ray_z[2]=depth
 
-        # print("3D pt: ", pt)
+        print(f"3D pt: {pt}, ray_z: {ray_z}")
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
-        return pt
+        return pt, ray_z
 
     def get_orientation(self, corners, z=None, visualize=False):
         # print("corners", corners)
@@ -103,7 +108,7 @@ class ArrowDetector:
         # ps.append(downpcd.get_centre())
 
         if visualize:
-            lines = [[0, 1], [1, 2], [2, 3]]
+            lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
             colors = [[1, 0, 0] for i in range(len(lines))]
             line_set = o3d.geometry.LineSet(
                 points=o3d.utility.Vector3dVector(corners),
@@ -205,9 +210,20 @@ class ArrowDetector:
             cv2.imshow("Image", preprocess(img))
             cv2.waitKey(0)
         # template = cv2.imread("arrow.jpeg")
+        max_cnt_area = -1
         for cnt in contours:
-            if cv2.contourArea(cnt) < 150:
+            cnt_area = cv2.contourArea(cnt)
+            # filtering using area
+            if cnt_area < 150:
                 continue
+
+            # # filtering using color of arrow
+            # mask = np.zeros(img.shape, np.uint8)
+            # cv2.drawContours(mask, [cnt], -1, 255, -1)
+            # cnt_mean = cv2.mean(img, mask=mask)
+            # if np.mean(cnt_mean) < 255 - OFFSET:
+            #     continue
+
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
             hull = cv2.convexHull(approx, returnPoints=False)
@@ -245,9 +261,14 @@ class ArrowDetector:
                     ##cv2.circle(img, tuple(np.average([arrow_tail, arrow_tip], axis=0).astype(int)), 3, (0, 0, 255), cv2.FILLED)#arrow centre
                     # theta = -(np.average([arrow_tail[0], arrow_tip[0]])/(np.shape(img)[0]) - 0.5)*45*2#linear estimate, assuming camera horizontal range from -45 to 45
                     ##theta not needed using pcd
-                    direction = dirct  # TODO multiple arrow case
+                    # In case of multiple arrows, max area cnt is taken
+                    if max_cnt_area < cnt_area:
+                        direction = dirct
+                        max_cnt_area = cnt_area
+                        bounding_box = cv2.boundingRect(cnt)
+
                     found = True
-                    bounding_box = cv2.boundingRect(cnt)
+
                     # print(bounding_box)
                     cv2.drawContours(img, [cnt], -1, (0, 255, 0), 2)
                     cv2.drawContours(img, [approx], -1, (0, 150, 155), 2)
@@ -308,15 +329,22 @@ class ArrowDetector:
         if direction is not None:
             x, y, w, h = bounding_box
             corners = [
-                self.pixel_to_3d(im_x, im_y)
+                self.pixel_to_3d(im_x, im_y)[0]
                 for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
             ]
-            x, y, z = self.pixel_to_3d(int(x + w / 2), int(y + h / 2))
+            X, Y, Z = [],[],[]
+            for i in np.random.randint(w,size=10):
+                for j in np.random.randint(h,size=10):
+                    x, y, z = self.pixel_to_3d(int(x + i), int(y + j))[0]
+                    X.append(x)
+                    Y.append(y)
+                    Z.append(z)
+            x, y, z = np.median(X), np.median(Y), np.median(Z)
             x, y, z = z, -x, y
             # print("x,y,z: ", x, y, z)
             pos = x, y, z
             # print("Point",points)
-            # print("Corners 3d",corners)
+            print("Corners 3d",corners)
 
             if far == False:
                 orient = self.get_orientation(corners,z=z, visualize=visualize) * 180 / np.pi
@@ -444,7 +472,7 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 
 def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    _, img_thres = cv2.threshold(img_gray, 100, 255, cv2.THRESH_TOZERO)
     # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
     img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
     img_canny = cv2.Canny(img_blur, 50, 50)
@@ -733,8 +761,11 @@ if __name__ == "__main__":
         rospy.init_node('pcd_checker')
         checker = ArrowDetector()
         rate = rospy.Rate(2)
+        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
+        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=5)
+        rospy.sleep(5)
         while not rospy.is_shutdown():
-            found, pos, orient = checker.arrow_detect(far=False, visualize=False)
+            found, pos, orient = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
             rate.sleep()
     except rospy.ROSInterruptException:
