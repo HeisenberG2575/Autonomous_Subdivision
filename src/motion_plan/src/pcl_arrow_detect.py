@@ -88,7 +88,6 @@ class ArrowDetector:
         # print(ray_z)
         depth = self.get_depth(ray_z[0],ray_z[1])
         ray_z[2]=depth
-	    #pt = [
         #    el * depth for el in ray_z
         #]  # multiply the ray by the depth; its Z-component should now equal the depth value
 
