@@ -5,6 +5,7 @@ bin/
 lib/
 build_isolated/
 devel_isolated/
+**/arrow_frames/
 
 *.bag
 

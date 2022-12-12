@@ -85,15 +85,15 @@ class ArrowDetector:
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
         depth = self.get_depth(ray_z[0],ray_z[1])
+        pt = [
+            el * depth for el in ray_z
+        ]  # multiply the ray by the depth; its Z-component should now equal the depth value
         ray_z[2]=depth
-        #pt = [
-        #    el * depth for el in ray_z
-        #]  # multiply the ray by the depth; its Z-component should now equal the depth value
 
-        # print("3D pt: ", pt)
+        print(f"3D pt: {pt}, ray_z: {ray_z}")
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
-        return ray_z
+        return pt, ray_z
 
     def get_orientation(self, corners, z=None, visualize=False):
         # print("corners", corners)
@@ -309,13 +309,13 @@ class ArrowDetector:
         if direction is not None:
             x, y, w, h = bounding_box
             corners = [
-                self.pixel_to_3d(im_x, im_y)
+                self.pixel_to_3d(im_x, im_y)[0]
                 for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
             ]
             X, Y, Z = [],[],[]
             for i in np.random.randint(w,size=10):
                 for j in np.random.randint(h,size=10):
-                    x, y, z = self.pixel_to_3d(int(x + i), int(y + j))
+                    x, y, z = self.pixel_to_3d(int(x + i), int(y + j))[1]
                     X.append(x)
                     Y.append(y)
                     Z.append(z)
@@ -452,7 +452,7 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 
 def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    _, img_thres = cv2.threshold(img_gray, 100, 255, cv2.THRESH_TOZERO)
     # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
     img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
     img_canny = cv2.Canny(img_blur, 50, 50)
@@ -741,8 +741,10 @@ if __name__ == "__main__":
         rospy.init_node('pcd_checker')
         checker = ArrowDetector()
         rate = rospy.Rate(2)
+        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
+        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=5)
         while not rospy.is_shutdown():
-            found, pos, orient = checker.arrow_detect(far=False, visualize=False)
+            found, pos, orient = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
             rate.sleep()
     except rospy.ROSInterruptException:
