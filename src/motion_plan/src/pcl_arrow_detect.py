@@ -13,7 +13,6 @@ from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
-import pyrealsense2 as rs
 
 
 path = rospkg.RosPack().get_path("motion_plan")
@@ -28,7 +27,7 @@ class ArrowDetector:
         self.pcd = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        depth_sub = message_filters.Subscriber(ros_cloud, Image)
+        depth_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
         sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depth_sub], 10, 0.15)
         sync_sub.registerCallback(self.depth_cam_callback)
@@ -58,7 +57,7 @@ class ArrowDetector:
 
     def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
-        # xyz_array = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
+        numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
         points = numpy_pcd[:,0:2]
         tree = cKDTree(points)
         idx = tree.query((x,y))[1]
@@ -202,8 +201,9 @@ class ArrowDetector:
         contours, _ = cv2.findContours(
             preprocess(img), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
         )[-2:]
-        cv2.imshow("Image", preprocess(img))
-        cv2.waitKey(0)
+        if visualize:
+            cv2.imshow("Image", preprocess(img))
+            cv2.waitKey(0)
         # template = cv2.imread("arrow.jpeg")
         for cnt in contours:
             if cv2.contourArea(cnt) < 150:
@@ -335,6 +335,7 @@ class ArrowDetector:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
         if visualize:
+            print("vis")
             cv2.imshow("frame", img)
             cv2.waitKey(10)
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
@@ -733,7 +734,7 @@ if __name__ == "__main__":
         checker = ArrowDetector()
         rate = rospy.Rate(2)
         while not rospy.is_shutdown():
-            found, pos, orient = checker.arrow_detect(far=False, visualize=True)
+            found, pos, orient = checker.arrow_detect(far=False, visualize=False)
             print("Found: ", found)
             rate.sleep()
     except rospy.ROSInterruptException:

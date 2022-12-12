@@ -45,6 +45,7 @@ class client:
         rospy.Subscriber("/map", OccupancyGrid, self.mapCallBack)
         rospy.Subscriber("/scan_filtered", LaserScan, self.lidar_callback)
         self.arrow_detector = ArrowDetector()
+        print("ArrowDetector Launched")
         self.marker_array_pub = rospy.Publisher(
             "/detected_arrow", MarkerArray, queue_size=10
         )
@@ -57,7 +58,7 @@ class client:
 
     def arrow_detect(self, far=True):
         # returns Found(0/1), position(x,y,z), theta(degrees; rover forward=0)
-        return self.arrow_detector.arrow_detect(far=far)
+        return self.arrow_detector.arrow_detect(far=far, visualize=False)
 
     def mapCallBack(self, data):
         self.mapData = data
