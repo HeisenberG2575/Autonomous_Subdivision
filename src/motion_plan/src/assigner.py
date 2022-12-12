@@ -31,7 +31,7 @@ def main_node():
             break
         count = 0
         found, pos, orient = my_client.arrow_detect(far=True)
-        while not found and count < 5:
+        while not found and count < 15:
             count += 1
             found, pos, orient = my_client.arrow_detect(far=True)
         if found:
@@ -44,7 +44,7 @@ def main_node():
                 np.cos(np.pi * orient / (2 * 180)),
             )
             posx, posy, q = my_client.bot_to_map(
-                pos[0], pos[1], q, frame="camera_link"
+                pos[0], pos[1], q, frame="mrt/camera_link"
             )  # map frame
             if my_client.is_complete(posx, posy, q):
                 rospy.loginfo(
@@ -123,7 +123,7 @@ def main_node():
                         np.cos(np.pi * orient / (2 * 180)),
                     )
                     posx, posy, q = my_client.bot_to_map(
-                        pos[0], pos[1], q, frame="camera_link"
+                        pos[0], pos[1], q, frame="mrt/camera_link"
                     )
                     # posx,posy, q = my_client.bot_to_map(0, 0, q)
                     my_client.add_arrow(
@@ -133,7 +133,8 @@ def main_node():
                         posx, posy, q=q, frame="map", off_dist=1.3
                     )
                     if success == True:
-                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q, frame="camera_link"), color=(0,1,1))
+                        # my_client.add_arrow(*my_client.bot_to_map(posx, posy,
+                        # q, frame="mrt/camera_link"), color=(0,1,1))
                         prev_x, prev_y, prev_q = posx, posy, q  # map frame
                         # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                         my_client.add_to_completed(posx, posy, q)
