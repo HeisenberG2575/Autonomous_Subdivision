@@ -15,7 +15,7 @@ import ros_numpy
 import message_filters
 
 
-OFFSET = 55
+OFFSET = 200
 
 path = rospkg.RosPack().get_path("motion_plan")
 

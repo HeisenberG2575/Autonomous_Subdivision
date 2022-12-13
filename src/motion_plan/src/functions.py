@@ -130,7 +130,7 @@ class client:
     def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.5):
         return self.move_to_goal(
             *self.find_off_goal(
-                xGoal, yGoal, q=q, frame=frame, offset=(-0.5, off_dist, 0, 0)
+                xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0)
             ),
             frame=frame
         )
