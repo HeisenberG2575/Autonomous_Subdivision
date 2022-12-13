@@ -15,7 +15,7 @@ import ros_numpy
 import message_filters
 
 
-OFFSET = 30
+OFFSET = 0.8
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -215,10 +215,12 @@ class ArrowDetector:
                 continue
             
             # filtering using color of arrow
-            mask = np.zeros(img.shape, np.uint8)
+            mask = np.zeros(img.shape[:2], np.uint8)
             cv2.drawContours(mask, [cnt], -1, 255, -1)
-            cnt_mean = cv2.mean(img, mask=mask)
-            if np.mean(cnt_mean) < 255 - OFFSET:
+            cnt_mean = np.array(cv2.mean(img, mask=mask)[:3])
+            norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
+            unit_vec = np.array([1, 1, 1])/np.sqrt(3)
+            if np.dot(norm_mean, unit_vec) < OFFSET:
                 continue
 
             peri = cv2.arcLength(cnt, True)
@@ -469,14 +471,15 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 
 def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
-    # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
-    img_canny = cv2.Canny(img_blur, 50, 50)
+    #_,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
     kernel = np.ones((3, 3))
-    img_dilate = cv2.dilate(img_canny, kernel, iterations=1)
-    img_erode = cv2.erode(img_dilate, kernel, iterations=1)
-    return img_erode
+    img_blur = cv2.medianBlur(img_thres, 3)
+    img_erode = cv2.erode(img_blur, kernel, iterations=1)
+    img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
+    img_canny = cv2.Canny(img_dilate, 50, 50)
+    
+    return img_canny
 
 
 def find_tip(points, convex_hull):
