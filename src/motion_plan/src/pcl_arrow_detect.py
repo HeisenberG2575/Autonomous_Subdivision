@@ -29,6 +29,7 @@ class ArrowDetector:
         self.br = CvBridge()
         self.pcd = None
         self.lagging_pcd = None
+        self.lagging_stamp = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         depth_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
@@ -220,6 +221,7 @@ class ArrowDetector:
         # Arrow detection
         self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
         img = self.frame.copy()
+        self.lagging_stamp = rospy.Time.now()
         # print("img dim: ", img.shape)
         orig_img = img.copy()
         found = False
