@@ -350,14 +350,14 @@ class ArrowDetector:
         if direction is not None:
             x, y, w, h = bounding_box
             corners = [
-                self.pixel_to_3d(im_x, im_y)[0]
+                self.pixel_to_3d(im_x, im_y)
                 for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
             ]
             im_x, im_y = x, y
             X, Y, Z = [],[],[]
             for i in np.random.randint(w/2,size=3):
                 for j in np.random.randint(h/2,size=3):
-                    x, y, z = self.pixel_to_3d(int(im_x + i + w/4), int(im_y + j + h/4))[0]
+                    x, y, z = self.pixel_to_3d(int(im_x + i + w/4), int(im_y + j + h/4))
                     X.append(x)
                     Y.append(y)
                     Z.append(z)
