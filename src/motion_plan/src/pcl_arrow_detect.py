@@ -16,7 +16,7 @@ import message_filters
 
 
 OFFSET = 0.8
-
+HORZ_OFFSET = 0.5
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -28,6 +28,7 @@ class ArrowDetector:
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
         self.pcd = None
+        self.lagging_pcd = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         depth_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
@@ -139,7 +140,7 @@ class ArrowDetector:
             line_set.colors = o3d.utility.Vector3dVector(colors)
             pcd.paint_uniform_color([1.0, 0, 0])
             o3d.visualization.draw_geometries(
-                [pcd, self.pcd, line_set],
+                [pcd, self.lagging_pcd, line_set],
                 zoom=0.1,
                 front=[-0.016, -0.22, -1.0],
                 lookat=[0.27, 0.4, 2.3],
@@ -200,7 +201,7 @@ class ArrowDetector:
         vol.bounding_polygon = o3d.utility.Vector3dVector(bounding_polygon)
 
         # Crop the point cloud using the Vector3dVector
-        cropped_pcd = vol.crop_point_cloud(self.pcd)
+        cropped_pcd = vol.crop_point_cloud(self.lagging_pcd)
 
         # Get a nice looking bounding box to display around the newly cropped point cloud
         # (This part is optional and just for display purposes)
@@ -217,6 +218,7 @@ class ArrowDetector:
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
+        self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
         img = self.frame.copy()
         # print("img dim: ", img.shape)
         orig_img = img.copy()
@@ -278,7 +280,7 @@ class ArrowDetector:
                             float(arrow_tail[1] - arrow_tip[1])
                             / (arrow_tail[0] - arrow_tip[0])
                         )
-                        > 0.2
+                        > HORZ_OFFSET
                     ):
                         continue  # Discard it, not a horizontal arrow
                     ##cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
@@ -499,10 +501,10 @@ def preprocess(img):
     #_,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
     img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
     kernel = np.ones((3, 3))
-    img_blur = cv2.medianBlur(img_thres, 3)
+    img_blur = cv2.medianBlur(img_thres, 5)
     img_erode = cv2.erode(img_blur, kernel, iterations=1)
     img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_dilate, 50, 50)
+    img_canny = cv2.Canny(img_dilate, 200, 200)
     
     return img_canny
 
