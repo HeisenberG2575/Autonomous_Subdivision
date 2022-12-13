@@ -66,7 +66,7 @@ class ArrowDetector:
         depth = numpy_pcd[idx,2]
         pt = numpy_pcd[idx]
         print(f"\npcl: {pt}")
-        return depth#next(gen)[0]
+        return pt#depth#next(gen)[0]
 
     def info_callback(self, data):
         self.model = PinholeCameraModel()
@@ -88,16 +88,37 @@ class ArrowDetector:
             el / ray[2] for el in ray
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
-        depth = self.get_depth(ray_z[0],ray_z[1])
+        pcl = self.get_depth(ray_z[0],ray_z[1])
+        # pcl2 = self.get_depth(ray[0],ray[1])
+        depth = pcl[2]
         pt = [
             el * depth for el in ray_z
         ]  # multiply the ray by the depth; its Z-component should now equal the depth value
-        ray_z[2]=depth
+        # ray_z[2]=depth
 
-        print(f"3D pt: {pt}, ray_z: {ray_z}")
+        # print(f"3D pt: {pt}, ray_z: {ray_z}")
+        # return self.old_pixel_to_3d(x,y),pcl
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
-        return pt, ray_z
+        # return pt, ray_z
+        return pt
+
+    def old_pixel_to_3d(self, x ,y):
+        print(f'getting {x}, {y} pixel coordinates')
+        gen = pc2.read_points(self.roscloud, field_names="z", skip_nans=True, uvs=[(x,y)])
+        depth = next(gen)[0]
+        print("depth: ",depth)
+        ray = self.model.projectPixelTo3dRay(
+            (x, y)
+        )  # get 3d ray of unit length through desired pixel
+        ray_z = [
+            el / ray[2] for el in ray
+        ]
+        pt = [
+            el * depth for el in ray_z
+        ]  # multiply the ray by the depth; its Z-component should now equal the depth value
+        print(f"old fn: {pt}")
+        return pt
 
     def get_orientation(self, corners, z=None, visualize=False):
         # print("corners", corners)
@@ -332,10 +353,11 @@ class ArrowDetector:
                 self.pixel_to_3d(im_x, im_y)[0]
                 for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
             ]
+            im_x, im_y = x, y
             X, Y, Z = [],[],[]
-            for i in np.random.randint(w,size=10):
-                for j in np.random.randint(h,size=10):
-                    x, y, z = self.pixel_to_3d(int(x + i), int(y + j))[0]
+            for i in np.random.randint(w/2,size=3):
+                for j in np.random.randint(h/2,size=3):
+                    x, y, z = self.pixel_to_3d(int(im_x + i + w/4), int(im_y + j + h/4))[0]
                     X.append(x)
                     Y.append(y)
                     Z.append(z)
@@ -363,7 +385,6 @@ class ArrowDetector:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
         if visualize:
-            print("vis")
             cv2.imshow("frame", img)
             cv2.waitKey(10)
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
@@ -761,9 +782,9 @@ if __name__ == "__main__":
         rospy.init_node('pcd_checker')
         checker = ArrowDetector()
         rate = rospy.Rate(2)
-        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
-        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=5)
-        rospy.sleep(5)
+        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=10)
+        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
+        rospy.sleep(3)
         while not rospy.is_shutdown():
             found, pos, orient = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
