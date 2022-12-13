@@ -15,7 +15,7 @@ import ros_numpy
 import message_filters
 
 
-OFFSET = 30
+OFFSET = 55
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -239,7 +239,7 @@ class ArrowDetector:
                 continue
 
             # # filtering using color of arrow
-            mask = np.zeros(img.shape, np.uint8)
+            mask = np.zeros(img.shape[:2], np.uint8)
             cv2.drawContours(mask, [cnt], -1, 255, -1)
             cnt_mean = cv2.mean(img, mask=mask)
             if np.mean(cnt_mean[:3]) > OFFSET:
