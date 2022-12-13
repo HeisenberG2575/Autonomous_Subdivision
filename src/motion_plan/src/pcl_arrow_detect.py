@@ -221,7 +221,7 @@ class ArrowDetector:
             mask = np.zeros(img.shape, np.uint8)
             cv2.drawContours(mask, [cnt], -1, 255, -1)
             cnt_mean = cv2.mean(img, mask=mask)
-            if np.mean(cnt_mean[:3]) < OFFSET:
+            if np.mean(cnt_mean[:3]) > OFFSET:
                 continue
 
             peri = cv2.arcLength(cnt, True)
