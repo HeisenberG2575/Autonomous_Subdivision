@@ -64,14 +64,17 @@ class client:
         self.mapData = data
 
     # TODO change to ps, q format for all
-    def bot_to_map(self, pos_x, pos_y, q, frame=ROOT_LINK):
+    def bot_to_map(self, pos_x, pos_y, q, frame=ROOT_LINK, timestamp=None):
         ps = PoseStamped()
         new_ps = PoseStamped()
 
         # set up the frame parameters
         ps.header.frame_id = frame
         ps.header.stamp = rospy.Time.now()
-
+        if timestamp == None:
+            timestamp = rospy.Time.now()
+        else:
+            self.arrow_detector.lagging_stamp
         ps.pose.position = Point(pos_x, pos_y, 0)
         ps.pose.orientation = recast_quaternion(q)
 
