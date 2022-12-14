@@ -25,16 +25,20 @@ class ArrowDetector:
 
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw",
+                 depth_topic='/mrt/camera/depth/image_rect_raw',
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
         self.pcd = None
         self.lagging_pcd = None
         self.lagging_stamp = None
+        self.lagging_depth = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        depth_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
+        cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
-        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depth_sub], 10, 0.15)
+        depthim_sub=message_filters.Subscriber(depth_topic,Image)
+        rospy.wait_for_message(depth_topic, Image, timeout=5)
+        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,cloud_sub,depthim_sub], 10, 0.15)
         sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
         self.info_sub = rospy.Subscriber(
@@ -44,7 +48,7 @@ class ArrowDetector:
         rospy.Rate(5).sleep()
         # rospy.spin()
 
-    def depth_cam_callback(self, img_data, cloud_data):
+    def depth_cam_callback(self, img_data, cloud_data,depth_im):
         current_frame = self.br.imgmsg_to_cv2(img_data)
         self.frame = current_frame
 
@@ -58,18 +62,23 @@ class ArrowDetector:
         self.roscloud = cloud_data
         self.pcd = convertCloudFromRosToOpen3d(cloud_data)
         self.pcd_width = cloud_data.width
+        self.depth_im=self.br.imgmsg_to_cv2(depth_im)
         # For unordered, height = 1
 
     def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
-        numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
-        points = numpy_pcd[:,0:2]
-        tree = cKDTree(points)
-        idx = tree.query((x,y))[1]
-        depth = numpy_pcd[idx,2]
-        pt = numpy_pcd[idx]
-        print(f"\npcl: {pt}")
-        return pt#depth#next(gen)[0]
+        # numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
+        # points = numpy_pcd[:,0:2]
+        # tree = cKDTree(points)
+        # idx = tree.query((x,y))[1]
+        # depth = numpy_pcd[idx,2]
+        # pt = numpy_pcd[idx]
+        # print(f"\npcl: {pt}")
+        #return pt#depth#next(gen)[0]
+        
+        depth = self.depth_im[int(y/2)][int(x/2)]
+        
+        return depth/1000
 
     def info_callback(self, data):
         self.model = PinholeCameraModel()
@@ -91,9 +100,10 @@ class ArrowDetector:
             el / ray[2] for el in ray
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
-        pcl = self.get_depth(ray_z[0],ray_z[1])
+        #pcl = self.get_depth(ray_z[0],ray_z[1])
         # pcl2 = self.get_depth(ray[0],ray[1])
-        depth = pcl[2]
+        #depth = pcl[2]
+        depth=self.get_depth(x,y)
         pt = [
             el * depth for el in ray_z
         ]  # multiply the ray by the depth; its Z-component should now equal the depth value
@@ -220,6 +230,7 @@ class ArrowDetector:
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
         self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
+        
         img = self.frame.copy()
         self.lagging_stamp = rospy.Time.now()
         # print("img dim: ", img.shape)

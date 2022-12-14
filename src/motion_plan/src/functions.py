@@ -70,11 +70,12 @@ class client:
 
         # set up the frame parameters
         ps.header.frame_id = frame
-        ps.header.stamp = rospy.Time.now()
+        
         if timestamp == None:
             timestamp = rospy.Time.now()
         else:
-            self.arrow_detector.lagging_stamp
+            timestamp = self.arrow_detector.lagging_stamp
+        ps.header.stamp = timestamp
         ps.pose.position = Point(pos_x, pos_y, 0)
         ps.pose.orientation = recast_quaternion(q)
 
