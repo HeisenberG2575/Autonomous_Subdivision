@@ -15,7 +15,8 @@ import ros_numpy
 import message_filters
 
 
-OFFSET = 30
+OFFSET = 0.8
+HORZ_OFFSET = 0.5
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -27,6 +28,8 @@ class ArrowDetector:
                  info_topic="/mrt/camera/color/camera_info"):
         self.br = CvBridge()
         self.pcd = None
+        self.lagging_pcd = None
+        self.lagging_stamp = None
         image_sub = message_filters.Subscriber(ros_image, Image)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         depth_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
@@ -66,7 +69,7 @@ class ArrowDetector:
         depth = numpy_pcd[idx,2]
         pt = numpy_pcd[idx]
         print(f"\npcl: {pt}")
-        return depth#next(gen)[0]
+        return pt#depth#next(gen)[0]
 
     def info_callback(self, data):
         self.model = PinholeCameraModel()
@@ -88,16 +91,37 @@ class ArrowDetector:
             el / ray[2] for el in ray
         ]  # normalize the ray so its Z-component equals 1.0
         # print(ray_z)
-        depth = self.get_depth(ray_z[0],ray_z[1])
+        pcl = self.get_depth(ray_z[0],ray_z[1])
+        # pcl2 = self.get_depth(ray[0],ray[1])
+        depth = pcl[2]
         pt = [
             el * depth for el in ray_z
         ]  # multiply the ray by the depth; its Z-component should now equal the depth value
-        ray_z[2]=depth
+        # ray_z[2]=depth
 
-        print(f"3D pt: {pt}, ray_z: {ray_z}")
+        # print(f"3D pt: {pt}, ray_z: {ray_z}")
+        # return self.old_pixel_to_3d(x,y),pcl
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
-        return pt, ray_z
+        # return pt, ray_z
+        return pt
+
+    def old_pixel_to_3d(self, x ,y):
+        print(f'getting {x}, {y} pixel coordinates')
+        gen = pc2.read_points(self.roscloud, field_names="z", skip_nans=True, uvs=[(x,y)])
+        depth = next(gen)[0]
+        print("depth: ",depth)
+        ray = self.model.projectPixelTo3dRay(
+            (x, y)
+        )  # get 3d ray of unit length through desired pixel
+        ray_z = [
+            el / ray[2] for el in ray
+        ]
+        pt = [
+            el * depth for el in ray_z
+        ]  # multiply the ray by the depth; its Z-component should now equal the depth value
+        print(f"old fn: {pt}")
+        return pt
 
     def get_orientation(self, corners, z=None, visualize=False):
         # print("corners", corners)
@@ -117,7 +141,7 @@ class ArrowDetector:
             line_set.colors = o3d.utility.Vector3dVector(colors)
             pcd.paint_uniform_color([1.0, 0, 0])
             o3d.visualization.draw_geometries(
-                [pcd, self.pcd, line_set],
+                [pcd, self.lagging_pcd, line_set],
                 zoom=0.1,
                 front=[-0.016, -0.22, -1.0],
                 lookat=[0.27, 0.4, 2.3],
@@ -178,7 +202,7 @@ class ArrowDetector:
         vol.bounding_polygon = o3d.utility.Vector3dVector(bounding_polygon)
 
         # Crop the point cloud using the Vector3dVector
-        cropped_pcd = vol.crop_point_cloud(self.pcd)
+        cropped_pcd = vol.crop_point_cloud(self.lagging_pcd)
 
         # Get a nice looking bounding box to display around the newly cropped point cloud
         # (This part is optional and just for display purposes)
@@ -195,7 +219,9 @@ class ArrowDetector:
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
+        self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
         img = self.frame.copy()
+        self.lagging_stamp = rospy.Time.now()
         # print("img dim: ", img.shape)
         orig_img = img.copy()
         found = False
@@ -217,12 +243,14 @@ class ArrowDetector:
             if cnt_area < 150:
                 continue
 
-            # # filtering using color of arrow
-            # mask = np.zeros(img.shape, np.uint8)
-            # cv2.drawContours(mask, [cnt], -1, 255, -1)
-            # cnt_mean = cv2.mean(img, mask=mask)
-            # if np.mean(cnt_mean) < 255 - OFFSET:
-            #     continue
+            # filtering using color of arrow
+            mask = np.zeros(img.shape[:2], np.uint8)
+            cv2.drawContours(mask, [cnt], -1, 255, -1)
+            cnt_mean = np.array(cv2.mean(img, mask=mask)[:3])
+            norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
+            unit_vec = np.array([1, 1, 1])/np.sqrt(3)
+            if np.dot(norm_mean, unit_vec) < OFFSET:
+                continue
 
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
@@ -254,7 +282,7 @@ class ArrowDetector:
                             float(arrow_tail[1] - arrow_tip[1])
                             / (arrow_tail[0] - arrow_tip[0])
                         )
-                        > 0.2
+                        > HORZ_OFFSET
                     ):
                         continue  # Discard it, not a horizontal arrow
                     ##cv2.circle(img, arrow_tail, 3, (0, 0, 255), cv2.FILLED)
@@ -329,13 +357,14 @@ class ArrowDetector:
         if direction is not None:
             x, y, w, h = bounding_box
             corners = [
-                self.pixel_to_3d(im_x, im_y)[0]
+                self.pixel_to_3d(im_x, im_y)
                 for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
             ]
+            im_x, im_y = x, y
             X, Y, Z = [],[],[]
-            for i in np.random.randint(w,size=10):
-                for j in np.random.randint(h,size=10):
-                    x, y, z = self.pixel_to_3d(int(x + i), int(y + j))[0]
+            for i in np.random.randint(w/2,size=3):
+                for j in np.random.randint(h/2,size=3):
+                    x, y, z = self.pixel_to_3d(int(im_x + i + w/4), int(im_y + j + h/4))
                     X.append(x)
                     Y.append(y)
                     Z.append(z)
@@ -363,7 +392,6 @@ class ArrowDetector:
             # global path #motion_plan pkg dir
             rospy.loginfo(str(["arrow found!", pos, orient]))
         if visualize:
-            print("vis")
             cv2.imshow("frame", img)
             cv2.waitKey(10)
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
@@ -472,14 +500,15 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 
 def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_thres = cv2.threshold(img_gray, 100, 255, cv2.THRESH_TOZERO)
-    # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
-    img_canny = cv2.Canny(img_blur, 50, 50)
+    #_,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
     kernel = np.ones((3, 3))
-    img_dilate = cv2.dilate(img_canny, kernel, iterations=1)
-    img_erode = cv2.erode(img_dilate, kernel, iterations=1)
-    return img_erode
+    img_blur = cv2.medianBlur(img_thres, 5)
+    img_erode = cv2.erode(img_blur, kernel, iterations=1)
+    img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
+    img_canny = cv2.Canny(img_dilate, 200, 200)
+    
+    return img_canny
 
 
 def find_tip(points, convex_hull):
@@ -761,9 +790,9 @@ if __name__ == "__main__":
         rospy.init_node('pcd_checker')
         checker = ArrowDetector()
         rate = rospy.Rate(2)
-        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=5)
-        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=5)
-        rospy.sleep(5)
+        rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=10)
+        rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
+        rospy.sleep(3)
         while not rospy.is_shutdown():
             found, pos, orient = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
