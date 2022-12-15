@@ -44,7 +44,7 @@ class ArrowDetector:
         self.info_sub = rospy.Subscriber(
             info_topic, CameraInfo, self.info_callback
         )
-        #rospy.sleep(3)
+        #rospy.sleep(1)
         rospy.Rate(5).sleep()
         # rospy.spin()
 
@@ -373,9 +373,13 @@ class ArrowDetector:
 
         if direction is not None:
             x, y, w, h = bounding_box
+            if far:
+                delta=5
+            else:
+                delta=10
             corners = [
                 self.pixel_to_3d(im_x, im_y)
-                for im_x, im_y in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+                for im_x, im_y in [(x+delta, y+delta), (x + w-delta, y+delta), (x + w-delta, y + h-delta), (x+delta, y + h-delta)]
             ]
             im_x, im_y = x, y
             X, Y, Z = [],[],[]
@@ -385,7 +389,7 @@ class ArrowDetector:
                     X.append(x)
                     Y.append(y)
                     Z.append(z)
-            x, y, z = np.median(X), np.median(Y), np.median(Z)
+            x, y, z = np.nanmedian(X), np.nanmedian(Y), np.nanmedian(Z)
             x, y, z = z, -x, y
             # print("x,y,z: ", x, y, z)
             pos = x, y, z
