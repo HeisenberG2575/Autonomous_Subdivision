@@ -132,10 +132,9 @@ class client:
             return False
 
     def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.5):
+        goal_initial=self.find_off_goal(xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0))
         return self.move_to_goal(
-            *self.find_off_goal(
-                xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0)
-            ),
+            *just_ahead(*goal_initial,off_dist=0.75),
             frame=frame
         )
 
