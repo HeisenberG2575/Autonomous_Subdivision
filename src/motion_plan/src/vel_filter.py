@@ -13,7 +13,7 @@ class filter():
     def __init__(self):
         rospy.init_node('vel_filter', anonymous=True)
         self.sub = rospy.Subscriber('/smooth_cmd_vel', Twist, self.callback)
-        self.pub = rospy.Publisher('/rover/drive_directives',drive_msg,queue_size=10)
+        self.pub = rospy.Publisher('/rover/drive_directives/autonomous',drive_msg,queue_size=10)
         rospy.spin()
 
     def callback(self, data):
