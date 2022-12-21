@@ -54,6 +54,7 @@ class EncoderOdom:
 
         if abs(d_time) < 0.000001:
             vel_x = 0.0
+            vel_y = 0
             vel_theta = 0.0
         else:
             vel_x = 0
