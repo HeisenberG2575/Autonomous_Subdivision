@@ -30,10 +30,10 @@ def main_node():
                 rospy.loginfo("Failed")
             break
         count = 0
-        found, pos, orient = my_client.arrow_detect(far=True)
+        found, pos, orient, timestamp = my_client.arrow_detect(far=True)
         while not found and count < 15:
             count += 1
-            found, pos, orient = my_client.arrow_detect(far=True)
+            found, pos, orient, timestamp = my_client.arrow_detect(far=True)
         if found:
             # TODO reduce conversions
             orient = orient + 90 if orient < 0 else orient - 90
@@ -44,7 +44,7 @@ def main_node():
                 np.cos(np.pi * orient / (2 * 180)),
             )
             posx, posy, q = my_client.bot_to_map(
-                pos[0], pos[1], q, frame="mrt/camera_link"
+                pos[0], pos[1], q, timestamp=timestamp, frame="mrt/camera_link"
             )  # map frame
             if my_client.is_complete(posx, posy, q):
                 rospy.loginfo(
@@ -78,9 +78,9 @@ def main_node():
                         frame="map"
                     )
                     rospy.sleep(1)
-                    found, pos, orient = my_client.arrow_detect(far=dist > 2)
+                    found, pos, orient, timestamp = my_client.arrow_detect(far=dist > 2)
                     if found == False or posx is None:
-                        found, pos, orient = my_client.recovery()
+                        found, pos, orient, timestamp = my_client.recovery()
                     if found == False:
                         break
                     orient = orient + 90 if orient < 0 else orient - 90
@@ -111,9 +111,9 @@ def main_node():
                         frame="map"
                     )
 
-                    found, pos, orient = my_client.arrow_detect(far=False)
+                    found, pos, orient, timestamp = my_client.arrow_detect(far=False)
                     if found == False or pos is None:
-                        found, pos, orient = my_client.recovery()
+                        found, pos, orient, timestamp = my_client.recovery()
                     if found == False:
                         continue
                     q = (
@@ -123,7 +123,7 @@ def main_node():
                         np.cos(np.pi * orient / (2 * 180)),
                     )
                     posx, posy, q = my_client.bot_to_map(
-                        pos[0], pos[1], q, frame="mrt/camera_link"
+                        pos[0], pos[1], q, timestamp=timestamp, frame="mrt/camera_link"
                     )
                     # posx,posy, q = my_client.bot_to_map(0, 0, q)
                     my_client.add_arrow(

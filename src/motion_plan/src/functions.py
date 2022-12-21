@@ -73,8 +73,6 @@ class client:
         
         if timestamp == None:
             timestamp = rospy.Time.now()
-        else:
-            timestamp = self.arrow_detector.lagging_stamp
         ps.header.stamp = timestamp
         ps.pose.position = Point(pos_x, pos_y, 0)
         ps.pose.orientation = recast_quaternion(q)
@@ -131,10 +129,11 @@ class client:
             rospy.loginfo("The robot failed to reach the destination")
             return False
 
-    def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.5):
+    def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.25):
         goal_initial=self.find_off_goal(xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0))
-        return self.move_to_goal(
-            *just_ahead(*goal_initial,off_dist=0.75),
+        goal_final=just_ahead(*goal_initial,off_dist=0.75)
+        #print('move to off goal',goal_initial,goal_final)
+        return self.move_to_goal(*goal_final,
             frame=frame
         )
 
@@ -200,14 +199,14 @@ class client:
 
     def recovery(self):
         rospy.loginfo("Initiating recovery")
-        found, pos, orient = self.arrow_detect()
+        found, pos, orient, timestamp = self.arrow_detect()
         j = 0
         while found == False and j < 3:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, np.sin(0.2), np.cos(0.2)))
             self.move_to_goal(x, y, q)
-            found, pos, orient = self.arrow_detect()
+            found, pos, orient, timestamp = self.arrow_detect()
             j += 1
         j = 0
         while found == False and j < 6:
@@ -215,7 +214,7 @@ class client:
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, np.sin(-0.2), np.cos(-0.2)))
             self.move_to_goal(x, y, q)
-            found, pos, orient = self.arrow_detect()
+            found, pos, orient, timestamp = self.arrow_detect()
             j += 1
         orient = orient + 90 if orient < 0 else orient - 90
         q = (
@@ -224,13 +223,13 @@ class client:
             np.sin(np.pi * orient / (2 * 180)),
             np.cos(np.pi * orient / (2 * 180)),
         )
-        posx, posy, q = self.bot_to_map(pos[0], pos[1], q)  # map frame
+        posx, posy, q = self.bot_to_map(pos[0], pos[1], q, timestamp)  # map frame
         if found == False or pos is None or self.is_complete(posx, posy, q):
             rospy.loginfo("Failed. Moving to last known good location")
             self.move_to_goal(*self.last_good_location)
             return False, None, None
         else:
-            return found, pos, orient
+            return found, pos, orient, timestamp
 
     def add_arrow(
         self, pos_x, pos_y, q, color=(0.2, 0.5, 1.0), pos_z=0
