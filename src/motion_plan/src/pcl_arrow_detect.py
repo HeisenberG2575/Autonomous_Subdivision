@@ -70,7 +70,7 @@ class ArrowDetector:
         
         # For unordered, height = 1
 
-    def get_depth(self, x, y, w=None, h=None):
+    def get_depth(self, x, y):
         # print(f"x: {x}, y: {y}")
         # numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
         # points = numpy_pcd[:,0:2]
@@ -82,13 +82,6 @@ class ArrowDetector:
         #return pt#depth#next(gen)[0]
         
         depth = self.lagging_depth[int(y//2)][int(x//2)]
-        # if depth==np.nan:
-        #     tries=0
-        #     while tries<5:
-        #         depth=self.lagging_depth[int(y)+]
-        #         if depth!=np.nan:
-        #             break
-        #         tries+=1
         return depth/1000
 
     def info_callback(self, data):
