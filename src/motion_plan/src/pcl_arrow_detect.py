@@ -13,7 +13,6 @@ from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
-import time
 
 OFFSET = 0.8
 HORZ_OFFSET = 0.5
