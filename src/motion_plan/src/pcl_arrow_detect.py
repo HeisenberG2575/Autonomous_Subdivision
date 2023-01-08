@@ -31,6 +31,11 @@ class ArrowDetector:
         self.lagging_pcd = None
         self.lagging_stamp = None
         self.lagging_depth = None
+        self.info_sub = rospy.Subscriber(
+            info_topic, CameraInfo, self.info_callback
+        )
+        rospy.wait_for_message(info_topic, CameraInfo, timeout=5)
+
         image_sub = message_filters.Subscriber(ros_image, Image)
         #rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
@@ -43,9 +48,7 @@ class ArrowDetector:
         sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
         sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
-        self.info_sub = rospy.Subscriber(
-            info_topic, CameraInfo, self.info_callback
-        )
+
         #rospy.sleep(1)
         rospy.Rate(5).sleep()
         # rospy.spin()
