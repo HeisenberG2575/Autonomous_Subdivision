@@ -538,7 +538,7 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 # ____________________________________ Image Processing
 
 
-def preprocess(img, adaptive=False):
+def preprocess(img, adaptive=True):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     
