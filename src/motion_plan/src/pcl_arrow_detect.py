@@ -260,9 +260,9 @@ class ArrowDetector:
                 continue
 
             # filtering using color of arrow
-            mask = np.zeros(img.shape[:2], np.uint8)
-            cv2.drawContours(mask, [cnt], -1, 255, -1)
-            cnt_mean = np.array(cv2.mean(img, mask=mask)[:3])
+            arrow_mask = np.zeros(img.shape[:2], np.uint8)
+            cv2.drawContours(arrow_mask, [cnt], -1, 255, -1)
+            cnt_mean = np.array(cv2.mean(img, mask=arrow_mask)[:3])
             norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
             unit_vec = np.array([1, 1, 1])/np.sqrt(3)
             if np.dot(norm_mean, unit_vec) < OFFSET:
