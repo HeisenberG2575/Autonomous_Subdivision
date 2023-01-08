@@ -16,17 +16,6 @@ def main_node():
     i = 1  # iteration for moving just ahead of the previous goal
 
     while not rospy.is_shutdown():
-        
-        found_cone,pos_cone,distance_cone=my_client.cone_detect()
-        q_cone=my_client.bot_to_map(0, 0, (0, 0, 0, 1))
-        if found_cone:
-            if distance_cone>2:
-                my_client.send_goal(*my_client.find_off_goal(pos_cone[0], pos_cone[1], q=q_cone, offset=(-(distance_cone-2), 0, 0, 0)),frame="map")
-                distance_cone=my_client.cone_detect()[2]
-            else:
-                my_client.cancel_goal()
-                print('Completed Task')
-
         if i > 8:
             found, pos, orient = my_client.recovery()
             i = 0
