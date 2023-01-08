@@ -274,7 +274,7 @@ class ArrowDetector:
             cnt_mean = np.array(cv2.mean(img, mask=arrow_mask)[:3])
             norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
             unit_vec = np.array([1, 1, 1])/np.sqrt(3)
-            print("cosine dist: ", np.dot(norm_mean, unit_vec))
+            # print("cosine dist: ", np.dot(norm_mean, unit_vec))
             if np.dot(norm_mean, unit_vec) < OFFSET:
                 continue
 
@@ -330,7 +330,7 @@ class ArrowDetector:
                         cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
                         unit_vec = np.array([1, 1, 1])/np.sqrt(3)
-                        print("cosine dist2: ", np.dot(norm_mean, unit_vec))
+                        # print("cosine dist2: ", np.dot(norm_mean, unit_vec))
                         if np.dot(norm_mean, unit_vec) < OFFSET:
                             continue
                         direction = dirct
