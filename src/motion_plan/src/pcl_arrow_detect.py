@@ -77,7 +77,7 @@ class ArrowDetector:
         # For unordered, height = 1
 
     def get_depth(self, x, y):
-        #print(f"x: {x}, y: {y}")
+        # print(f"x: {x}, y: {y}")
         # numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
         # points = numpy_pcd[:,0:2]
         # tree = cKDTree(points)
@@ -238,14 +238,6 @@ class ArrowDetector:
         #                                   lookat=[7.67473496, -3.24231903,  0.3062945],
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
-
-    def cone_detect(self,im_x,im_y):
-        x,y,z=self.pixel_to_3d(im_x,im_y)
-        x, y, z = z, -x, y
-        pos=(x,y)
-        cone_distance=z
-
-        return True,pos,cone_distance
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
