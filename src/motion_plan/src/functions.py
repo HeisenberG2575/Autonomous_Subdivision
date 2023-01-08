@@ -56,9 +56,6 @@ class client:
         rospy.Rate(5).sleep()  #
         # rospy.spin()
 
-    def cone_detect(self):
-        return self.arrow_detector.cone_detect()
-
     def arrow_detect(self, far=True):
         # returns Found(0/1), position(x,y,z), theta(degrees; rover forward=0)
         return self.arrow_detector.arrow_detect(far=far, visualize=False)
