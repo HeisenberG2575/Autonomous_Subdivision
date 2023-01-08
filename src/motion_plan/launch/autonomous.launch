@@ -25,6 +25,7 @@
         <arg name="camera" value="mrt/camera"/>
         <arg name="filters" value="pointcloud,hole_filling,decimation,temporal,disparity"/>
         <arg name="enable_sync" value="true"/>
+        <arg name="align_depth" value="true"/>
     </include>
     <include file="$(find motion_plan)/launch/lidar.launch" if="$(arg lidar)"/>
     <!-- <include file="$(find motion_plan)/launch/rtabmap_zed2.launch" if="$(arg zed2)"/> -->
