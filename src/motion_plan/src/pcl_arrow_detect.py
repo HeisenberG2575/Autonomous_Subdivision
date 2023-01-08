@@ -18,7 +18,7 @@ OFFSET = 0.9
 HORZ_OFFSET = 0.5
 
 path = rospkg.RosPack().get_path("motion_plan")
-        
+
 
 class ArrowDetector:
 
