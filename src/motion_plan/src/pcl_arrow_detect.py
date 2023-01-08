@@ -18,7 +18,7 @@ OFFSET = 0.9
 HORZ_OFFSET = 0.5
 
 path = rospkg.RosPack().get_path("motion_plan")
-
+        
 
 class ArrowDetector:
 
@@ -57,24 +57,27 @@ class ArrowDetector:
         current_frame = self.br.imgmsg_to_cv2(img_data)
         self.frame = current_frame
         self.depth_im=self.br.imgmsg_to_cv2(depth_im)
+        #resized_frame=cv2.resize(self.frame, self.depth_im.shape)
         #self.timestamp = cloud_data.header.stamp
         self.timestamp=img_data.header.stamp
         depth_o3d = o3d.geometry.Image(self.depth_im.astype(np.float32))
+        #color_o3d = o3d.geometry.Image(resized_frame.astype(np.uint8))
         intrinsics = o3d.camera.PinholeCameraIntrinsic(self.frame.shape[0],self.frame.shape[1],(self.K[0]), (self.K[4]), (self.K[2]), (self.K[5]))
-        self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics)
+        #rgbd_im = o3d.geometry.RGBDImage.create_from_color_and_depth(color_o3d,depth_o3d,convert_rgb_to_intensity=False)
+        self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics )
         
 
         #self.numpy_pcd = np.asarray(self.pcd.points)
 
         # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
         #self.roscloud = cloud_data
-        #self.pcd = convertCloudFromRosToOpen3d(cloud_data)
+        #self.pc = convertCloudFromRosToOpen3d(cloud_data)
         #self.pcd_width = cloud_data.width
         
         # For unordered, height = 1
 
     def get_depth(self, x, y):
-        # print(f"x: {x}, y: {y}")
+        #print(f"x: {x}, y: {y}")
         # numpy_pcd = ros_numpy.point_cloud2.get_xyz_points(ros_numpy.point_cloud2.pointcloud2_to_array(self.roscloud), remove_nans=True, dtype=np.float32)
         # points = numpy_pcd[:,0:2]
         # tree = cKDTree(points)
@@ -83,8 +86,10 @@ class ArrowDetector:
         # pt = numpy_pcd[idx]
         # print(f"\npcl: {pt}")
         #return pt#depth#next(gen)[0]
-        
-        depth = self.lagging_depth[int(y//2)][int(x//2)]
+        #print(self.depth_im.shape,self.frame.shape)       
+        depth = self.lagging_depth[int(y)][int(x)]
+        #print(self.lagging_depth[int(y//2)-1:int(y//2)+2][int(x//2)-1:int(x//2)+2])
+                          
         return depth/1000
 
     def info_callback(self, data):
@@ -234,6 +239,14 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
 
+    def cone_detect(self,im_x,im_y):
+        x,y,z=self.pixel_to_3d(im_x,im_y)
+        x, y, z = z, -x, y
+        pos=(x,y)
+        cone_distance=z
+
+        return True,pos,cone_distance
+
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
         img = self.frame.copy()
@@ -259,8 +272,9 @@ class ArrowDetector:
         for cnt in contours:
             cnt_area = cv2.contourArea(cnt)
             # filtering using area
-            if cnt_area < 150:
+            if cnt_area < 125:
                 continue
+            print(cnt_area)
 
             # filtering using color of arrow
             arrow_mask = np.zeros(img.shape[:2], np.uint8)
@@ -268,6 +282,7 @@ class ArrowDetector:
             cnt_mean = np.array(cv2.mean(img, mask=arrow_mask)[:3])
             norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
             unit_vec = np.array([1, 1, 1])/np.sqrt(3)
+            print("cosine dist: ", np.dot(norm_mean, unit_vec))
             if np.dot(norm_mean, unit_vec) < OFFSET:
                 continue
 
@@ -323,6 +338,7 @@ class ArrowDetector:
                         cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
                         unit_vec = np.array([1, 1, 1])/np.sqrt(3)
+                        print("cosine dist2: ", np.dot(norm_mean, unit_vec))
                         if np.dot(norm_mean, unit_vec) < OFFSET:
                             continue
                         direction = dirct
@@ -393,11 +409,16 @@ class ArrowDetector:
             if far:
                 delta=1
             else:
-                delta=3
+                delta=2
             corners = [
                 self.pixel_to_3d(im_x, im_y)
                 for im_x, im_y in [(x+delta, y+delta), (x + w-delta, y+delta), (x + w-delta, y + h-delta), (x+delta, y + h-delta)]
             ]
+            temp=self.lagging_depth.copy()
+            temp=cv2.cvtColor(temp,cv2.COLOR_GRAY2RGB)
+            cv2.rectangle(temp,(x,y),((x+w),(y+h)),color=(0, 0, 255),thickness=3)
+            cv2.imshow('depth corners',temp)
+            cv2.waitKey(0)
             im_x, im_y = x, y
             X, Y, Z = [],[],[]
             for i in np.random.randint(w/2,size=3):
@@ -538,35 +559,19 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 # ____________________________________ Image Processing
 
 
-def preprocess(img, adaptive=True):
+def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    
-    if adaptive:
-        img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
-    else:
-        _,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
-    # cv2.imshow("Image Thres", img_thres)
+    _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
+    img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
     kernel = np.ones((3, 3))
-    
-    if adaptive:
-        img_blur = cv2.medianBlur(img_thres, 5)
-        # cv2.imshow("Image Blur", img_blur)
-
-        img_erode = cv2.erode(img_blur, kernel, iterations=1)
-        # cv2.imshow("Image Erode", img_erode)
-
-        img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-        # cv2.imshow("Image Dilate", img_dilate)
-    else:
-        img_dilate = img_thres
-    img_canny = cv2.Canny(img_dilate, 200, 200)
-    # cv2.imshow("Image Canny", img_canny)
-
-    # cv2.waitKey(0)
-
+    img_erode = cv2.erode(img_blur, kernel, iterations=1)
+    img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
+    img_canny = cv2.Canny(img_dilate, 50, 50)
+    # kernel = np.ones((3, 3))
+    # img_dilate = cv2.dilate(img_canny, kernel, iterations=1)
+    # img_erode = cv2.erode(img_dilate, kernel, iterations=1)
     return img_canny
-
 
 def find_tip(points, convex_hull):
     length = len(points)
