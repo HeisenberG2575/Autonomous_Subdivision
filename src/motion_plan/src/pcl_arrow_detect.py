@@ -14,7 +14,7 @@ from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
 
-OFFSET = 0.8
+OFFSET = 0.9
 HORZ_OFFSET = 0.5
 
 path = rospkg.RosPack().get_path("motion_plan")
@@ -307,9 +307,24 @@ class ArrowDetector:
                     ##theta not needed using pcd
                     # In case of multiple arrows, max area cnt is taken
                     if max_cnt_area < cnt_area:
+                        tmp_bb = cv2.boundingRect(cnt)
+                        x, y, w, h = tmp_bb
+                        # filtering using color of background
+                        background_mask = np.zeros(img.shape[:2], np.uint8)
+                        bb_cnt = np.array([np.array([[x+w, y]]), np.array([[x+w, y+h]]), np.array([[x, y+h]]), np.array([[x, y]])])
+                        cv2.drawContours(background_mask, [bb_cnt], -1, 255, -1)
+                        background_mask = background_mask - arrow_mask
+                        cv2.imshow("Image Bg 1", background_mask)
+                        cv2.waitKey(0)
+
+                        cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
+                        norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
+                        unit_vec = np.array([1, 1, 1])/np.sqrt(3)
+                        if np.dot(norm_mean, unit_vec) < OFFSET:
+                            continue
                         direction = dirct
                         max_cnt_area = cnt_area
-                        bounding_box = cv2.boundingRect(cnt)
+                        bounding_box = tmp_bb
 
                     found = True
 
@@ -520,16 +535,33 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 # ____________________________________ Image Processing
 
 
-def preprocess(img):
+def preprocess(img, adaptive=False):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #_,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
-    img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
-    kernel = np.ones((3, 3))
-    img_blur = cv2.medianBlur(img_thres, 5)
-    img_erode = cv2.erode(img_blur, kernel, iterations=1)
-    img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_dilate, 200, 200)
     
+    
+    if adaptive:
+        img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
+    else:
+        _,img_thres =  cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    # cv2.imshow("Image Thres", img_thres)
+    kernel = np.ones((3, 3))
+    
+    if adaptive:
+        img_blur = cv2.medianBlur(img_thres, 5)
+        # cv2.imshow("Image Blur", img_blur)
+
+        img_erode = cv2.erode(img_blur, kernel, iterations=1)
+        # cv2.imshow("Image Erode", img_erode)
+
+        img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
+        # cv2.imshow("Image Dilate", img_dilate)
+    else:
+        img_dilate = img_thres
+    img_canny = cv2.Canny(img_dilate, 200, 200)
+    # cv2.imshow("Image Canny", img_canny)
+
+    # cv2.waitKey(0)
+
     return img_canny
 
 
@@ -565,11 +597,6 @@ def find_tail_rect(points, convex_hull):
             ):
                 sides.append(np.linalg.norm(pt - prev_pt))
                 prev_pt = pt
-            # print(sides)
-            # print(abs(sides[0]-sides[2])/float(sides[2]))
-            # print(abs(sides[1]-sides[3])/float(sides[1]))
-            # print( "diff: "+ str( abs(abs(points[(indices[i-1]+1)%length]- points[indices[i-1]]) - abs(points[indices[i]]- points[indices[i]-1])) ))#/abs(points[(indices[i-1]+1)%length]- points[indices[i-1]])
-            # print( "diff: "+ str( abs(abs(points[(indices[i-1]+1)%length]- points[indices[i-1]]) - abs(points[indices[i]]- points[indices[i]-1]))/abs((points[(indices[i-1]+1)%length]- points[indices[i]]).astype(np.float32)) ))#
 
             if (
                 abs(sides[0] - sides[2]) / float(max(sides[2], sides[0])) < 0.5
