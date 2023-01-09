@@ -24,9 +24,10 @@ class ArrowDetector:
 
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw",
-                 depth_topic='/mrt/camera/depth/image_rect_raw',
-                 info_topic="/mrt/camera/color/camera_info"):
+                 depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
+                 info_topic="/mrt/camera/color/camera_info", visualize=False):
         self.br = CvBridge()
+        self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
         self.lagging_stamp = None
@@ -39,19 +40,49 @@ class ArrowDetector:
         image_sub = message_filters.Subscriber(ros_image, Image)
         #rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        #cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
+        if self.visualize:
+        	cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         #rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
-        #rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
+        	rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
         depthim_sub=message_filters.Subscriber(depth_topic,Image)
         #rospy.Subscriber(depth_topic, Image, self.depth_callback)
         rospy.wait_for_message(depth_topic, Image, timeout=5)
-        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
-        sync_sub.registerCallback(self.depth_cam_callback)
+        if self.visualize:
+        	sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 10, 0.3)
+        	sync_sub.registerCallback(self.depth_cam_callback_cloud)
+        else:
+        	sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
+        	sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
 
         #rospy.sleep(1)
         rospy.Rate(5).sleep()
         # rospy.spin()
+
+
+    def depth_cam_callback_cloud(self, img_data,depth_im,cloud_data):
+        current_frame = self.br.imgmsg_to_cv2(img_data)
+        self.frame = current_frame
+        self.depth_im=self.br.imgmsg_to_cv2(depth_im)
+        #resized_frame=cv2.resize(self.frame, self.depth_im.shape)
+        #self.timestamp = cloud_data.header.stamp
+        self.timestamp=img_data.header.stamp
+        depth_o3d = o3d.geometry.Image(self.depth_im.astype(np.float32))
+        #color_o3d = o3d.geometry.Image(resized_frame.astype(np.uint8))
+        intrinsics = o3d.camera.PinholeCameraIntrinsic(self.frame.shape[0],self.frame.shape[1],(self.K[0]), (self.K[4]), (self.K[2]), (self.K[5]))
+        #rgbd_im = o3d.geometry.RGBDImage.create_from_color_and_depth(color_o3d,depth_o3d,convert_rgb_to_intensity=False)
+        self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics )
+
+
+        #self.numpy_pcd = np.asarray(self.pcd.points)
+
+        # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
+        self.roscloud = cloud_data
+        self.pc = convertCloudFromRosToOpen3d(cloud_data)
+        #self.pcd_width = cloud_data.width
+
+        # For unordered, height = 1
+
 
     def depth_cam_callback(self, img_data,depth_im):
         current_frame = self.br.imgmsg_to_cv2(img_data)
@@ -65,7 +96,7 @@ class ArrowDetector:
         intrinsics = o3d.camera.PinholeCameraIntrinsic(self.frame.shape[0],self.frame.shape[1],(self.K[0]), (self.K[4]), (self.K[2]), (self.K[5]))
         #rgbd_im = o3d.geometry.RGBDImage.create_from_color_and_depth(color_o3d,depth_o3d,convert_rgb_to_intensity=False)
         self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics )
-        
+
 
         #self.numpy_pcd = np.asarray(self.pcd.points)
 
@@ -73,7 +104,7 @@ class ArrowDetector:
         #self.roscloud = cloud_data
         #self.pc = convertCloudFromRosToOpen3d(cloud_data)
         #self.pcd_width = cloud_data.width
-        
+
         # For unordered, height = 1
 
     def get_depth(self, x, y):
@@ -86,10 +117,10 @@ class ArrowDetector:
         # pt = numpy_pcd[idx]
         # print(f"\npcl: {pt}")
         #return pt#depth#next(gen)[0]
-        #print(self.depth_im.shape,self.frame.shape)       
+        #print(self.depth_im.shape,self.frame.shape)
         depth = self.lagging_depth[int(y)][int(x)]
         #print(self.lagging_depth[int(y//2)-1:int(y//2)+2][int(x//2)-1:int(x//2)+2])
-                          
+
         return depth/1000
 
     def info_callback(self, data):
@@ -163,7 +194,7 @@ class ArrowDetector:
             line_set.colors = o3d.utility.Vector3dVector(colors)
             pcd.paint_uniform_color([1.0, 0, 0])
             o3d.visualization.draw_geometries(
-                [pcd, self.lagging_pcd, line_set],
+                [pcd, self.pc, line_set],
                 zoom=0.1,
                 front=[-0.016, -0.22, -1.0],
                 lookat=[0.27, 0.4, 2.3],
@@ -324,8 +355,9 @@ class ArrowDetector:
                         bb_cnt = np.array([np.array([[x+w, y]]), np.array([[x+w, y+h]]), np.array([[x, y+h]]), np.array([[x, y]])])
                         cv2.drawContours(background_mask, [bb_cnt], -1, 255, -1)
                         background_mask = background_mask - arrow_mask
-                        cv2.imshow("Image Bg 1", background_mask)
-                        cv2.waitKey(0)
+                        if visualize:
+                            cv2.imshow("Image Bg 1", background_mask)
+                            cv2.waitKey(0)
 
                         cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
@@ -409,8 +441,9 @@ class ArrowDetector:
             temp=self.lagging_depth.copy()
             temp=cv2.cvtColor(temp,cv2.COLOR_GRAY2RGB)
             cv2.rectangle(temp,(x,y),((x+w),(y+h)),color=(0, 0, 255),thickness=3)
-            cv2.imshow('depth corners',temp)
-            cv2.waitKey(0)
+            if visualize:
+                cv2.imshow('depth corners',temp)
+                cv2.waitKey(0)
             im_x, im_y = x, y
             X, Y, Z = [],[],[]
             for i in np.random.randint(w/2,size=3):
@@ -837,7 +870,7 @@ def arrow_test():
 if __name__ == "__main__":
     try:
         rospy.init_node('pcd_checker')
-        checker = ArrowDetector()
+        checker = ArrowDetector(visualize=True)
         rate = rospy.Rate(2)
         rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=10)
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
