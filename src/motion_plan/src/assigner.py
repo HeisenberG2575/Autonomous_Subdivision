@@ -156,7 +156,6 @@ def main_node():
                     a,b,c=my_client.find_off_goal(val_cone[0], val_cone[1], q=q_cone, offset=(-1, 0, 0, 0),frame='root_link')
                     my_client.send_goal(a,b,c,frame="map")
                     my_client.add_arrow(a,b,c, color=(0, 1, 0), pos_z=0.48)
-                    print(a,b,c)
                     break
                 else:
                     my_client.cancel_goal()

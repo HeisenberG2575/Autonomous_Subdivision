@@ -14,7 +14,7 @@ from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
 from numpy import nan
-import Detector from detect
+import Detector from ConeDetection.detect
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
@@ -275,6 +275,7 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
     def cone_detect(self):
+        
         img=self.frame.copy()
         xyxy, bb_img, conf = self.detector(img)
         idx=np.argmax(conf)
