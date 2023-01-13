@@ -17,7 +17,7 @@ def main_node():
 
     while not rospy.is_shutdown():
         if i > 8:
-            found, pos, orient = my_client.recovery()
+            found, pos, orient = my_client.recovery(far=True)
             i = 0
         if len(my_client.completed_list) == 5:
             rospy.loginfo("End Goal found")
@@ -81,7 +81,7 @@ def main_node():
                     rospy.sleep(1)
                     found, pos, orient, timestamp = my_client.arrow_detect(far=dist > 2)
                     if found == False or posx is None:
-                        found, pos, orient, timestamp = my_client.recovery()
+                        found, pos, orient, timestamp = my_client.recovery(far=dist > 2)
                     if found == False:
                         break
                     orient = orient + 90 if orient < 0 else orient - 90
@@ -114,7 +114,7 @@ def main_node():
 
                     found, pos, orient, timestamp = my_client.arrow_detect(far=False)
                     if found == False or pos is None:
-                        found, pos, orient, timestamp = my_client.recovery()
+                        found, pos, orient, timestamp = my_client.recovery(far=False)
                     if found == False:
                         continue
                     q = (
