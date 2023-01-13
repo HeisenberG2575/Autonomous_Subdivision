@@ -13,12 +13,14 @@ from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
+from numpy import nan
+import Detector from detect
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
+CONE_THRESH=0.8
 
 path = rospkg.RosPack().get_path("motion_plan")
-
 
 class ArrowDetector:
 
@@ -27,6 +29,7 @@ class ArrowDetector:
                  depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
                  info_topic="/mrt/camera/color/camera_info", visualize=False):
         self.br = CvBridge()
+        self.detector = Detector()
         self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
@@ -41,18 +44,18 @@ class ArrowDetector:
         #rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
         if self.visualize:
-        	cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
+            cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         #rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
-        	rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
+            rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
         depthim_sub=message_filters.Subscriber(depth_topic,Image)
         #rospy.Subscriber(depth_topic, Image, self.depth_callback)
         rospy.wait_for_message(depth_topic, Image, timeout=5)
         if self.visualize:
-        	sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 10, 0.3)
-        	sync_sub.registerCallback(self.depth_cam_callback_cloud)
+            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 10, 0.3)
+            sync_sub.registerCallback(self.depth_cam_callback_cloud)
         else:
-        	sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
-        	sync_sub.registerCallback(self.depth_cam_callback)
+            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
+            sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
 
         #rospy.sleep(1)
@@ -129,7 +132,7 @@ class ArrowDetector:
         self.K = data.K
         self.info_sub.unregister()  # Only subscribe once
 
-    def pixel_to_3d(self, x, y):
+    def pixel_to_3d(self, x, y,cone=False):
         """Converts an image pixel into 3D point from Pointcloud
 
         :returns: np.ndarray
@@ -157,6 +160,8 @@ class ArrowDetector:
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])),' actual pixel ',(x,y))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
         # return pt, ray_z
+        if cone:
+            return ray,pt
         return pt
 
     def old_pixel_to_3d(self, x ,y):
@@ -269,6 +274,26 @@ class ArrowDetector:
         #                                   lookat=[7.67473496, -3.24231903,  0.3062945],
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
+    def cone_detect(self):
+        img=self.frame.copy()
+        xyxy, bb_img, conf = self.detector(img)
+        idx=np.argmax(conf)
+        cone_bounding_box=xyxy[idx]
+        if conf[idx]>CONE_THRESH:
+            found=True
+        else:
+            return False,None,None
+        im_x=(cone_bounding_box[0]+cone_bounding_box[2])/2
+        im_y=(cone_bounding_box[1]+cone_bounding_box[3])/2
+        ray,pos_tup=self.pixel_to_3d(im_x,im_y,cone=True)
+        x,y,z=pos_tup
+        cone_distance=z
+        x,y,z=z,-x,y
+        pos=(x,y)
+        if cone_distance==0 or cone_distance==nan:
+            return found,ray,cone_distance
+        return found,pos,cone_distance
+
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
@@ -297,7 +322,7 @@ class ArrowDetector:
             # filtering using area
             if cnt_area < 125:
                 continue
-            print(cnt_area)
+            #print(cnt_area)
 
             # filtering using color of arrow
             arrow_mask = np.zeros(img.shape[:2], np.uint8)

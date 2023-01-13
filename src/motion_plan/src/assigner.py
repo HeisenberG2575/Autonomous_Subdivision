@@ -4,7 +4,7 @@ from functions import *
 import rospy
 from cv2 import destroyAllWindows
 import sys
-
+from numpy import nan
 
 def main_node():
 
@@ -31,6 +31,7 @@ def main_node():
             break
         count = 0
         found, pos, orient, timestamp = my_client.arrow_detect(far=True)
+        
         while not found and count < 15:
             count += 1
             found, pos, orient, timestamp = my_client.arrow_detect(far=True)
@@ -145,6 +146,22 @@ def main_node():
             my_client.send_goal(*nearby_goal, frame="map")
             rospy.sleep(6.2)  # Sleep for 1-2s and let the bot move towards the goal
             i += 1
+
+            found_cone,val_cone,distance_cone=my_client.cone_detect()
+            curr_x,curr_y,q_cone=my_client.bot_to_map(0, 0, (0, 0, 0, 1))
+            if found_cone:
+                if distance_cone==0 or distance_cone==nan :
+                    my_client.send_goal(*just_ahead(curr_x,curr_y,val_cone,off_dist=0.25),frame="map")
+                if distance_cone>1:
+                    a,b,c=my_client.find_off_goal(val_cone[0], val_cone[1], q=q_cone, offset=(-1, 0, 0, 0),frame='root_link')
+                    my_client.send_goal(a,b,c,frame="map")
+                    my_client.add_arrow(a,b,c, color=(0, 1, 0), pos_z=0.48)
+                    print(a,b,c)
+                    break
+                else:
+                    my_client.cancel_goal()
+                    print('Completed Task')
+                    break
     # rate.sleep()
 
     # Close down the video stream when done
