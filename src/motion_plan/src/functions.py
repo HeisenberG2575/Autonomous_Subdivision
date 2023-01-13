@@ -15,6 +15,7 @@ from tf.transformations import quaternion_multiply
 import tf
 from nav_msgs.msg import OccupancyGrid
 from pcl_arrow_detect import ArrowDetector
+from numpy import nan
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
@@ -55,6 +56,14 @@ class client:
         self.last_good_location = self.bot_to_map(0, 0, (0, 0, 0, 1))
         rospy.Rate(5).sleep()  #
         # rospy.spin()
+
+    def cone_detect(self):
+        print(self.arrow_detector.cone_detect())
+        found,val,cone_distance = self.arrow_detector.cone_detect()
+        if cone_distance==0 or cone_distance==nan:
+            q=q_from_vector3D(val)
+            return found,q,cone_distance #sending quaternion
+        return found,val,cone_distance #sending pos
 
     def arrow_detect(self, far=True):
         # returns Found(0/1), position(x,y,z), theta(degrees; rover forward=0)
