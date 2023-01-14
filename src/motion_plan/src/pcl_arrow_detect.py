@@ -274,27 +274,47 @@ class ArrowDetector:
         #                                   lookat=[7.67473496, -3.24231903,  0.3062945],
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
-    def cone_detect(self):
-
+    def cone_detect(self,visualize=False):
+        
         img=self.frame.copy()
         xyxy, bb_img, conf = self.detector.run_on_img(img)
         print(conf)
         if len(conf) == 0:
             return False, None, None
         idx=np.argmax(conf)
-        cone_bounding_box=xyxy[idx]
+        cone_bb=xyxy[idx]
         if conf[idx]>CONE_THRESH:
             found=True
             print("Cone Detected")
         else:
             return False,None,None
-        im_x=(cone_bounding_box[0]+cone_bounding_box[2])/2
-        im_y=(cone_bounding_box[1]+cone_bounding_box[3])/2
+        im_x=(cone_bb[0]+cone_bb[2])/2
+        im_y=(cone_bb[1]+cone_bb[3])/2
         ray,pos_tup=self.pixel_to_3d(im_x,im_y,cone=True)
         x,y,z=pos_tup
         cone_distance=z
         x,y,z=z,-x,y
         pos=(x,y)
+        if visualize:
+            corners=[[im_x-5,im_y-5,cone_distance],[im_x-5,im_y+5,cone_distance],[im_x+5,im_y-5,cone_distance],[im_x+5,im_y+5,cone_distance],
+            [cone_bb[0],cone_bb[1],cone_distance],[cone_bb[0],cone_bb[3],cone_distance],[cone_bb[2],cone_bb[3],cone_distance],[cone_bb[2],cone_bb[1],cone_distance]]
+            lines = [[0, 1], [1, 2], [2, 3], [3, 0],[4,5],[5,6],[6,7],[7,4]]
+            colors = [[1, 0, 0] for i in range(len(lines))]
+            line_set = o3d.geometry.LineSet(
+                points=o3d.utility.Vector3dVector(corners),
+                lines=o3d.utility.Vector2iVector(lines),
+            )
+            line_set.colors = o3d.utility.Vector3dVector(colors)
+            self.lagging_pcd.paint_uniform_color([1.0, 0, 0])
+            o3d.visualization.draw_geometries(
+                [self.lagging_pcd, self.pc, line_set],
+                zoom=0.1,
+                front=[-0.016, -0.22, -1.0],
+                lookat=[0.27, 0.4, 2.3],
+                up=[0.0048, -1.0, 0.22],
+            )
+            cv2.imshow('Cone',bb_img)
+            cv2.waitKey(0)
         if cone_distance==0 or cone_distance==nan:
             return found,ray,cone_distance
         return found,pos,cone_distance
@@ -908,6 +928,7 @@ if __name__ == "__main__":
         while not rospy.is_shutdown():
             found, pos, orient, timestamp = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
+            found,val,cone_dist=checker.cone_detect(visualize=True)
             rate.sleep()
     except rospy.ROSInterruptException:
         print("Closing")
