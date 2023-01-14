@@ -14,11 +14,11 @@ from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
 from numpy import nan
-import Detector from ConeDetection.detect
+import ConeDetection.detect as cd
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
-CONE_THRESH=0.8
+CONE_THRESH=0.7
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -29,7 +29,7 @@ class ArrowDetector:
                  depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
                  info_topic="/mrt/camera/color/camera_info", visualize=False):
         self.br = CvBridge()
-        self.detector = Detector()
+        self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
@@ -275,13 +275,17 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
     def cone_detect(self):
-        
+
         img=self.frame.copy()
-        xyxy, bb_img, conf = self.detector(img)
+        xyxy, bb_img, conf = self.detector.run_on_img(img)
+        print(conf)
+        if len(conf) == 0:
+            return False, None, None
         idx=np.argmax(conf)
         cone_bounding_box=xyxy[idx]
         if conf[idx]>CONE_THRESH:
             found=True
+            print("Cone Detected")
         else:
             return False,None,None
         im_x=(cone_bounding_box[0]+cone_bounding_box[2])/2
