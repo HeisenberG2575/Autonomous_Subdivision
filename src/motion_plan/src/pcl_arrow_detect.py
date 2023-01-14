@@ -14,11 +14,11 @@ from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
 from numpy import nan
-from ConeDetection.detect import Detector 
+import ConeDetection.detect as cd
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
-CONE_THRESH=0.8
+CONE_THRESH=0.7
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -29,7 +29,7 @@ class ArrowDetector:
                  depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
                  info_topic="/mrt/camera/color/camera_info", visualize=False):
         self.br = CvBridge()
-        self.detector = Detector()
+        self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
@@ -277,13 +277,15 @@ class ArrowDetector:
     def cone_detect(self,visualize=False):
         
         img=self.frame.copy()
-        xyxy, bb_img, conf = self.detector(img)
+        xyxy, bb_img, conf = self.detector.run_on_img(img)
+        print(conf)
+        if len(conf) == 0:
+            return False, None, None
         idx=np.argmax(conf)
         cone_bb=xyxy[idx]
-        if visualize:
-            cv2.imshow('Cone',bb_img)
         if conf[idx]>CONE_THRESH:
             found=True
+            print("Cone Detected")
         else:
             return False,None,None
         im_x=(cone_bb[0]+cone_bb[2])/2
@@ -312,6 +314,7 @@ class ArrowDetector:
                 up=[0.0048, -1.0, 0.22],
             )
             cv2.imshow('Cone',bb_img)
+            cv2.waitKey(0)
         if cone_distance==0 or cone_distance==nan:
             return found,ray,cone_distance
         return found,pos,cone_distance
