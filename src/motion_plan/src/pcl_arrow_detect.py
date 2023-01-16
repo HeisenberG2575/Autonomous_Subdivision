@@ -46,12 +46,12 @@ class ArrowDetector:
         if self.visualize:
             cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         #rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
-            rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
+            rospy.wait_for_message(ros_cloud, PointCloud2, timeout=10)
         depthim_sub=message_filters.Subscriber(depth_topic,Image)
         #rospy.Subscriber(depth_topic, Image, self.depth_callback)
         rospy.wait_for_message(depth_topic, Image, timeout=5)
         if self.visualize:
-            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 10, 0.3)
+            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 15, 0.5)
             sync_sub.registerCallback(self.depth_cam_callback_cloud)
         else:
             sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
@@ -64,7 +64,7 @@ class ArrowDetector:
 
 
     def depth_cam_callback_cloud(self, img_data,depth_im,cloud_data):
-        current_frame = self.br.imgmsg_to_cv2(img_data)
+        current_frame = self.br.imgmsg_to_cv2(img_data, desired_encoding="bgr8")
         self.frame = current_frame
         self.depth_im=self.br.imgmsg_to_cv2(depth_im)
         #resized_frame=cv2.resize(self.frame, self.depth_im.shape)
@@ -275,7 +275,7 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
     def cone_detect(self,visualize=False):
-        
+
         img=self.frame.copy()
         xyxy, bb_img, conf = self.detector.run_on_img(img)
         print(conf)
@@ -924,7 +924,7 @@ if __name__ == "__main__":
         rate = rospy.Rate(2)
         rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=10)
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
-        rospy.sleep(3)
+        rospy.sleep(5)
         while not rospy.is_shutdown():
             found, pos, orient, timestamp = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)

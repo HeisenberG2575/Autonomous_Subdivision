@@ -186,7 +186,7 @@ def run(
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
                     global new_xyxy
                     new_xyxy = np.array([xyxy[i].squeeze() for i in range(4)])
-                    
+
 
             # Stream results
             im0 = annotator.result()
@@ -231,8 +231,8 @@ def run(
 
 
 class Detector:
-    def __init__(self, 
-            weights=ROOT / 'yolov5s.pt',  # model path or triton URL
+    def __init__(self,
+            weights=ROOT / 'ConeDetection/weights/best.pt',  # model path or triton URL
             data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
             imgsz=(640, 640),  # inference size (height, width)
             conf_thres=0.25,  # confidence threshold
@@ -315,14 +315,14 @@ class Detector:
                 for *xyxy, conf, cls in reversed(det):
                     label = f'{conf:.2f}'
                     conf_arr.append(conf)
-                    annotator.box_label(xyxy, label, color=colors(0, True)) 
+                    annotator.box_label(xyxy, label, color=colors(0, True))
                     global new_xyxy
-                    new_xyxy = np.array([xyxy[i].squeeze() for i in range(4)]) 
+                    new_xyxy = np.array([xyxy[i].squeeze() for i in range(4)])
                     xyxy_arr.append(new_xyxy.copy())
 
         #     # Stream results
-        bb_img = annotator.result()    
-        return xyxy_arr.copy(), bb_img, conf_arr     
+        bb_img = annotator.result()
+        return xyxy_arr.copy(), bb_img, conf_arr
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -353,7 +353,7 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
-    
+
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
@@ -361,7 +361,7 @@ def parse_opt():
 
 def detect_cone(source, weights, conf=0.6):
     return run(source = source, weights = weights, conf_thres=conf)
-    
+
 def main(opt, img=None):
     check_requirements(exclude=('tensorboard', 'thop'))
     return detect_cone(source = 0, weights = "weights/best.pt")
@@ -379,5 +379,5 @@ if __name__ == "__main__":
     print("img_shape :", bb_img.shape)
     cv2.imshow("BB img", bb_img)
     cv2.waitKey(0)
-    
+
     # print(run('images', 'weights/best.pt'))
