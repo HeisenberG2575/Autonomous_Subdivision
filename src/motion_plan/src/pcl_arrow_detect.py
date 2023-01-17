@@ -16,6 +16,8 @@ import message_filters
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
+COLOR_OFFSET = 0
+CANNY_THRES = 250
 
 path = rospkg.RosPack().get_path("motion_plan")
 
@@ -264,7 +266,7 @@ class ArrowDetector:
         for cnt in contours:
             cnt_area = cv2.contourArea(cnt)
             # filtering using area
-            if cnt_area < 125:
+            if cnt_area < 60:
                 continue
             print(cnt_area)
 
@@ -275,7 +277,7 @@ class ArrowDetector:
             norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
             unit_vec = np.array([1, 1, 1])/np.sqrt(3)
             # print("cosine dist: ", np.dot(norm_mean, unit_vec))
-            if np.dot(norm_mean, unit_vec) < OFFSET:
+            if np.dot(norm_mean, unit_vec) < OFFSET or np.mean(cnt_mean)>255/2-COLOR_OFFSET:
                 continue
 
             peri = cv2.arcLength(cnt, True)
@@ -331,7 +333,7 @@ class ArrowDetector:
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
                         unit_vec = np.array([1, 1, 1])/np.sqrt(3)
                         # print("cosine dist2: ", np.dot(norm_mean, unit_vec))
-                        if np.dot(norm_mean, unit_vec) < OFFSET:
+                        if np.dot(norm_mean, unit_vec) < OFFSET or np.mean(cnt_mean) < 255/2 + COLOR_OFFSET:
                             continue
                         direction = dirct
                         max_cnt_area = cnt_area
@@ -553,16 +555,23 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 
 def preprocess(img):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+    img_equalized = cv2.equalizeHist(img_gray)
+
+    _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
     # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+    # img_blur = cv2.bilateralFilter(img_equalized, 5, 75, 75)
     kernel = np.ones((3, 3))
-    img_erode = cv2.erode(img_blur, kernel, iterations=1)
-    img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_dilate, 50, 50)
-    # kernel = np.ones((3, 3))
-    # img_dilate = cv2.dilate(img_canny, kernel, iterations=1)
-    # img_erode = cv2.erode(img_dilate, kernel, iterations=1)
+    # img_erode = cv2.erode(img_equalized, kernel, iterations=1)
+    # img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
+    img_canny = cv2.Canny(img_thres, CANNY_THRES, CANNY_THRES)
+
+    # cv2.imshow("Img equalized", img_equalized)
+    # cv2.imshow("Img blur", img_blur)
+    # cv2.imshow("Erode", img_erode)
+    # cv2.imshow("Dilate", img_dilate)
+    # cv2.imshow("Canny", img_canny)
+    # cv2.imshow("Thres", img_thres)
+    # cv2.waitKey(0)
     return img_canny
 
 def find_tip(points, convex_hull):
