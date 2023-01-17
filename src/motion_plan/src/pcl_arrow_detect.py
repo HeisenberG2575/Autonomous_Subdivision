@@ -13,22 +13,26 @@ from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
 from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
+from numpy import nan
+import ConeDetection.detect as cd
 
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
 COLOR_OFFSET = 0
 CANNY_THRES = 250
+CONE_THRESH=0.7
 
 path = rospkg.RosPack().get_path("motion_plan")
-
 
 class ArrowDetector:
 
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw",
-                 depth_topic='/mrt/camera/depth/image_rect_raw',
-                 info_topic="/mrt/camera/color/camera_info"):
+                 depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
+                 info_topic="/mrt/camera/color/camera_info", visualize=False):
         self.br = CvBridge()
+        self.detector = cd.Detector()
+        self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
         self.lagging_stamp = None
@@ -41,19 +45,49 @@ class ArrowDetector:
         image_sub = message_filters.Subscriber(ros_image, Image)
         #rospy.Subscriber(ros_image, Image, self.cam_callback)
         rospy.wait_for_message(ros_image, Image, timeout=5)
-        #cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
+        if self.visualize:
+            cloud_sub = message_filters.Subscriber(ros_cloud, PointCloud2)
         #rospy.Subscriber(ros_cloud, PointCloud2, self.pc_callback)
-        #rospy.wait_for_message(ros_cloud, PointCloud2, timeout=5)
+            rospy.wait_for_message(ros_cloud, PointCloud2, timeout=10)
         depthim_sub=message_filters.Subscriber(depth_topic,Image)
         #rospy.Subscriber(depth_topic, Image, self.depth_callback)
         rospy.wait_for_message(depth_topic, Image, timeout=5)
-        sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
-        sync_sub.registerCallback(self.depth_cam_callback)
+        if self.visualize:
+            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub,cloud_sub], 15, 0.5)
+            sync_sub.registerCallback(self.depth_cam_callback_cloud)
+        else:
+            sync_sub = message_filters.ApproximateTimeSynchronizer([image_sub,depthim_sub], 10, 0.1)
+            sync_sub.registerCallback(self.depth_cam_callback)
         # save for unregistering
 
         #rospy.sleep(1)
         rospy.Rate(5).sleep()
         # rospy.spin()
+
+
+    def depth_cam_callback_cloud(self, img_data,depth_im,cloud_data):
+        current_frame = self.br.imgmsg_to_cv2(img_data, desired_encoding="bgr8")
+        self.frame = current_frame
+        self.depth_im=self.br.imgmsg_to_cv2(depth_im)
+        #resized_frame=cv2.resize(self.frame, self.depth_im.shape)
+        #self.timestamp = cloud_data.header.stamp
+        self.timestamp=img_data.header.stamp
+        depth_o3d = o3d.geometry.Image(self.depth_im.astype(np.float32))
+        #color_o3d = o3d.geometry.Image(resized_frame.astype(np.uint8))
+        intrinsics = o3d.camera.PinholeCameraIntrinsic(self.frame.shape[0],self.frame.shape[1],(self.K[0]), (self.K[4]), (self.K[2]), (self.K[5]))
+        #rgbd_im = o3d.geometry.RGBDImage.create_from_color_and_depth(color_o3d,depth_o3d,convert_rgb_to_intensity=False)
+        self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics )
+
+
+        #self.numpy_pcd = np.asarray(self.pcd.points)
+
+        # print('pcd height: ',cloud_data.height, 'width: ', cloud_data.width )
+        self.roscloud = cloud_data
+        self.pc = convertCloudFromRosToOpen3d(cloud_data)
+        #self.pcd_width = cloud_data.width
+
+        # For unordered, height = 1
+
 
     def depth_cam_callback(self, img_data,depth_im):
         current_frame = self.br.imgmsg_to_cv2(img_data)
@@ -67,7 +101,7 @@ class ArrowDetector:
         intrinsics = o3d.camera.PinholeCameraIntrinsic(self.frame.shape[0],self.frame.shape[1],(self.K[0]), (self.K[4]), (self.K[2]), (self.K[5]))
         #rgbd_im = o3d.geometry.RGBDImage.create_from_color_and_depth(color_o3d,depth_o3d,convert_rgb_to_intensity=False)
         self.pcd = o3d.geometry.PointCloud.create_from_depth_image(depth_o3d, intrinsics )
-        
+
 
         #self.numpy_pcd = np.asarray(self.pcd.points)
 
@@ -75,7 +109,7 @@ class ArrowDetector:
         #self.roscloud = cloud_data
         #self.pc = convertCloudFromRosToOpen3d(cloud_data)
         #self.pcd_width = cloud_data.width
-        
+
         # For unordered, height = 1
 
     def get_depth(self, x, y):
@@ -88,10 +122,10 @@ class ArrowDetector:
         # pt = numpy_pcd[idx]
         # print(f"\npcl: {pt}")
         #return pt#depth#next(gen)[0]
-        #print(self.depth_im.shape,self.frame.shape)       
+        #print(self.depth_im.shape,self.frame.shape)
         depth = self.lagging_depth[int(y)][int(x)]
         #print(self.lagging_depth[int(y//2)-1:int(y//2)+2][int(x//2)-1:int(x//2)+2])
-                          
+
         return depth/1000
 
     def info_callback(self, data):
@@ -100,7 +134,7 @@ class ArrowDetector:
         self.K = data.K
         self.info_sub.unregister()  # Only subscribe once
 
-    def pixel_to_3d(self, x, y):
+    def pixel_to_3d(self, x, y,cone=False):
         """Converts an image pixel into 3D point from Pointcloud
 
         :returns: np.ndarray
@@ -128,6 +162,8 @@ class ArrowDetector:
         # print("reconstructed pixel:", self.model.project3dToPixel((pt[0], pt[1], pt[2])),' actual pixel ',(x,y))
         # assert math.dist(self.model.project3dToPixel((pt[0], pt[1], pt[2])), [x,y]) < 5
         # return pt, ray_z
+        if cone:
+            return ray,pt
         return pt
 
     def old_pixel_to_3d(self, x ,y):
@@ -165,7 +201,7 @@ class ArrowDetector:
             line_set.colors = o3d.utility.Vector3dVector(colors)
             pcd.paint_uniform_color([1.0, 0, 0])
             o3d.visualization.draw_geometries(
-                [pcd, self.lagging_pcd, line_set],
+                [pcd, self.pc, line_set],
                 zoom=0.1,
                 front=[-0.016, -0.22, -1.0],
                 lookat=[0.27, 0.4, 2.3],
@@ -240,6 +276,51 @@ class ArrowDetector:
         #                                   lookat=[7.67473496, -3.24231903,  0.3062945],
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
+    def cone_detect(self,visualize=False):
+
+        img=self.frame.copy()
+        xyxy, bb_img, conf = self.detector.run_on_img(img)
+        print(conf)
+        if len(conf) == 0:
+            return False, None, None
+        idx=np.argmax(conf)
+        cone_bb=xyxy[idx]
+        if conf[idx]>CONE_THRESH:
+            found=True
+            print("Cone Detected")
+        else:
+            return False,None,None
+        im_x=(cone_bb[0]+cone_bb[2])/2
+        im_y=(cone_bb[1]+cone_bb[3])/2
+        ray,pos_tup=self.pixel_to_3d(im_x,im_y,cone=True)
+        x,y,z=pos_tup
+        cone_distance=z
+        x,y,z=z,-x,y
+        pos=(x,y)
+        if visualize:
+            corners=[[im_x-5,im_y-5,cone_distance],[im_x-5,im_y+5,cone_distance],[im_x+5,im_y-5,cone_distance],[im_x+5,im_y+5,cone_distance],
+            [cone_bb[0],cone_bb[1],cone_distance],[cone_bb[0],cone_bb[3],cone_distance],[cone_bb[2],cone_bb[3],cone_distance],[cone_bb[2],cone_bb[1],cone_distance]]
+            lines = [[0, 1], [1, 2], [2, 3], [3, 0],[4,5],[5,6],[6,7],[7,4]]
+            colors = [[1, 0, 0] for i in range(len(lines))]
+            line_set = o3d.geometry.LineSet(
+                points=o3d.utility.Vector3dVector(corners),
+                lines=o3d.utility.Vector2iVector(lines),
+            )
+            line_set.colors = o3d.utility.Vector3dVector(colors)
+            self.lagging_pcd.paint_uniform_color([1.0, 0, 0])
+            o3d.visualization.draw_geometries(
+                [self.lagging_pcd, self.pc, line_set],
+                zoom=0.1,
+                front=[-0.016, -0.22, -1.0],
+                lookat=[0.27, 0.4, 2.3],
+                up=[0.0048, -1.0, 0.22],
+            )
+            cv2.imshow('Cone',bb_img)
+            cv2.waitKey(0)
+        if cone_distance==0 or cone_distance==nan:
+            return found,ray,cone_distance
+        return found,pos,cone_distance
+
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
@@ -268,7 +349,7 @@ class ArrowDetector:
             # filtering using area
             if cnt_area < 60:
                 continue
-            print(cnt_area)
+            #print(cnt_area)
 
             # filtering using color of arrow
             arrow_mask = np.zeros(img.shape[:2], np.uint8)
@@ -326,8 +407,9 @@ class ArrowDetector:
                         bb_cnt = np.array([np.array([[x+w, y]]), np.array([[x+w, y+h]]), np.array([[x, y+h]]), np.array([[x, y]])])
                         cv2.drawContours(background_mask, [bb_cnt], -1, 255, -1)
                         background_mask = background_mask - arrow_mask
-                        cv2.imshow("Image Bg 1", background_mask)
-                        cv2.waitKey(0)
+                        if visualize:
+                            cv2.imshow("Image Bg 1", background_mask)
+                            cv2.waitKey(0)
 
                         cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
@@ -411,8 +493,9 @@ class ArrowDetector:
             temp=self.lagging_depth.copy()
             temp=cv2.cvtColor(temp,cv2.COLOR_GRAY2RGB)
             cv2.rectangle(temp,(x,y),((x+w),(y+h)),color=(0, 0, 255),thickness=3)
-            cv2.imshow('depth corners',temp)
-            cv2.waitKey(0)
+            if visualize:
+                cv2.imshow('depth corners',temp)
+                cv2.waitKey(0)
             im_x, im_y = x, y
             X, Y, Z = [],[],[]
             for i in np.random.randint(w/2,size=3):
@@ -846,14 +929,15 @@ def arrow_test():
 if __name__ == "__main__":
     try:
         rospy.init_node('pcd_checker')
-        checker = ArrowDetector()
+        checker = ArrowDetector(visualize=True)
         rate = rospy.Rate(2)
         rospy.wait_for_message("/mrt/camera/color/image_raw", Image, timeout=10)
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
-        rospy.sleep(3)
+        rospy.sleep(5)
         while not rospy.is_shutdown():
             found, pos, orient, timestamp = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
+            found,val,cone_dist=checker.cone_detect(visualize=True)
             rate.sleep()
     except rospy.ROSInterruptException:
         print("Closing")

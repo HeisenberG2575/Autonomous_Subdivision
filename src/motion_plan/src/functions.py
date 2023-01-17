@@ -15,6 +15,7 @@ from tf.transformations import quaternion_multiply
 import tf
 from nav_msgs.msg import OccupancyGrid
 from pcl_arrow_detect import ArrowDetector
+from numpy import nan
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
@@ -56,6 +57,14 @@ class client:
         rospy.Rate(5).sleep()  #
         # rospy.spin()
 
+    def cone_detect(self):
+        print(self.arrow_detector.cone_detect())
+        found,val,cone_distance = self.arrow_detector.cone_detect()
+        if cone_distance==0 or cone_distance==nan:
+            q=q_from_vector3D(val)
+            return found,q,cone_distance #sending quaternion
+        return found,val,cone_distance #sending pos
+
     def arrow_detect(self, far=True):
         # returns Found(0/1), position(x,y,z), theta(degrees; rover forward=0)
         return self.arrow_detector.arrow_detect(far=far, visualize=False)
@@ -70,7 +79,7 @@ class client:
 
         # set up the frame parameters
         ps.header.frame_id = frame
-        
+
         if timestamp == None:
             timestamp = rospy.Time.now()
         ps.header.stamp = timestamp
@@ -195,16 +204,16 @@ class client:
         self.ac.cancel_goal()
         rospy.loginfo("Goal cancelled")
 
-    def recovery(self):
+    def recovery(self, far=True):
         rospy.loginfo("Initiating recovery")
-        found, pos, orient, timestamp = self.arrow_detect()
+        found, pos, orient, timestamp = self.arrow_detect(far)
         j = 0
         while found == False and j < 3:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, np.sin(0.2), np.cos(0.2)))
             self.move_to_goal(x, y, q)
-            found, pos, orient, timestamp = self.arrow_detect()
+            found, pos, orient, timestamp = self.arrow_detect(far)
             j += 1
         j = 0
         while found == False and j < 6:
@@ -212,16 +221,17 @@ class client:
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, np.sin(-0.2), np.cos(-0.2)))
             self.move_to_goal(x, y, q)
-            found, pos, orient, timestamp = self.arrow_detect()
+            found, pos, orient, timestamp = self.arrow_detect(far)
             j += 1
-        orient = orient + 90 if orient < 0 else orient - 90
-        q = (
-            0,
-            0,
-            np.sin(np.pi * orient / (2 * 180)),
-            np.cos(np.pi * orient / (2 * 180)),
-        )
-        posx, posy, q = self.bot_to_map(pos[0], pos[1], q, timestamp)  # map frame
+        if found:
+            orient = orient + 90 if orient < 0 else orient - 90
+            q = (
+                0,
+                0,
+                np.sin(np.pi * orient / (2 * 180)),
+                np.cos(np.pi * orient / (2 * 180)),
+            )
+            posx, posy, q = self.bot_to_map(pos[0], pos[1], q, timestamp=timestamp)  # map frame
         if found == False or pos is None or self.is_complete(posx, posy, q):
             rospy.loginfo("Failed. Moving to last known good location")
             self.move_to_goal(*self.last_good_location)
