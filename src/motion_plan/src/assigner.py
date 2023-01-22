@@ -104,7 +104,7 @@ def main_node():
                 if found == True:
                     # my_client.cancel_goal()
                     # TODO change to 20
-                    rospy.sleep(1)
+                    rospy.sleep(10)
                     success = my_client.move_to_goal(
                         *my_client.find_off_goal(
                             posx, posy, q=q_p, offset=(-1.5, 0, 0, 0)
@@ -131,7 +131,7 @@ def main_node():
                         posx, posy, q, color=(0, 1, 0), pos_z=0.48
                     )  # Add Rviz arrow marker, map frame
                     success = my_client.move_to_off_goal(
-                        posx, posy, q=q, frame="map", off_dist=0.75
+                        posx, posy, q=q, frame="map", off_dist=1, ahead=0.75
                     )
                     if success == True:
                         # my_client.add_arrow(*my_client.bot_to_map(posx, posy,
@@ -139,11 +139,11 @@ def main_node():
                         prev_x, prev_y, prev_q = posx, posy, q  # map frame
                         # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                         my_client.add_to_completed(posx, posy, q)
-                        rospy.sleep(10)
+                        #rospy.sleep(10)
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
         if not found:
-            nearby_goal = just_ahead(prev_x, prev_y, prev_q, off_dist=0.7 + 0.7 * i)
+            nearby_goal = my_client.move_to_off_goal(prev_x, prev_y, prev_q,off_dist=0.3, ahead=0.7 + 0.7 * i)
             my_client.send_goal(*nearby_goal, frame="map")
             rospy.sleep(6.2)  # Sleep for 1-2s and let the bot move towards the goal
             i += 1
