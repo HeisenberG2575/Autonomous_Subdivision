@@ -138,7 +138,7 @@ class client:
             rospy.loginfo("The robot failed to reach the destination")
             return False
 
-    def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.25):
+    def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=1.5):
         goal_initial=self.find_off_goal(xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0))
         goal_final=just_ahead(*goal_initial,off_dist=0.75)
         #print('move to off goal',goal_initial,goal_final)
@@ -224,18 +224,18 @@ class client:
             found, pos, orient, timestamp = self.arrow_detect(far)
             j += 1
         if found:
-            orient = orient + 90 if orient < 0 else orient - 90
+            orient2 = orient + 90 if orient < 0 else orient - 90
             q = (
                 0,
                 0,
-                np.sin(np.pi * orient / (2 * 180)),
-                np.cos(np.pi * orient / (2 * 180)),
+                np.sin(np.pi * orient2 / (2 * 180)),
+                np.cos(np.pi * orient2 / (2 * 180)),
             )
             posx, posy, q = self.bot_to_map(pos[0], pos[1], q, timestamp=timestamp)  # map frame
         if found == False or pos is None or self.is_complete(posx, posy, q):
             rospy.loginfo("Failed. Moving to last known good location")
             self.move_to_goal(*self.last_good_location)
-            return False, None, None
+            return False, None, None, timestamp
         else:
             return found, pos, orient, timestamp
 

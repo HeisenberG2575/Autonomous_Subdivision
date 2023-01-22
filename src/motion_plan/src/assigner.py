@@ -79,9 +79,9 @@ def main_node():
                         frame="map"
                     )
                     rospy.sleep(1)
-                    found, pos, orient, timestamp = my_client.arrow_detect(far=dist > 2)
+                    found, pos, orient, timestamp = my_client.arrow_detect(far=dist > 3)
                     if found == False or posx is None:
-                        found, pos, orient, timestamp = my_client.recovery(far=dist > 2)
+                        found, pos, orient, timestamp = my_client.recovery(far=dist > 3)
                     if found == False:
                         break
                     orient = orient + 90 if orient < 0 else orient - 90
@@ -131,7 +131,7 @@ def main_node():
                         posx, posy, q, color=(0, 1, 0), pos_z=0.48
                     )  # Add Rviz arrow marker, map frame
                     success = my_client.move_to_off_goal(
-                        posx, posy, q=q, frame="map", off_dist=1.25
+                        posx, posy, q=q, frame="map", off_dist=0.75
                     )
                     if success == True:
                         # my_client.add_arrow(*my_client.bot_to_map(posx, posy,
@@ -139,6 +139,7 @@ def main_node():
                         prev_x, prev_y, prev_q = posx, posy, q  # map frame
                         # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                         my_client.add_to_completed(posx, posy, q)
+                        rospy.sleep(10)
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
         if not found:
@@ -148,14 +149,17 @@ def main_node():
             i += 1
 
             found_cone,val_cone,distance_cone=my_client.cone_detect()
-            curr_x,curr_y,q_cone=my_client.bot_to_map(0, 0, (0, 0, 0, 1))
+            curr_x,curr_y,q_cone=my_client.bot_to_map(0, 0, (0, 0, 0, 1),frame='mrt/camera_link')
             if found_cone:
                 if distance_cone==0 or distance_cone==nan :
                     my_client.send_goal(*just_ahead(curr_x,curr_y,val_cone,off_dist=0.25),frame="map")
                 if distance_cone>1:
-                    a,b,c=my_client.find_off_goal(val_cone[0], val_cone[1], q=None, offset=(0, 1, 0, 0),frame='root_link')
+                    posx,posy,q = my_client.bot_to_map(val_cone[0],val_cone[1],q=None,frame='mrt/camera_link')
+                    a,b,c=my_client.find_off_goal(posx, posy, q=None, offset=(-1, 0, 0, 0))
+                    q_right = (0, -np.sqrt(0.5), 0, np.sqrt(0.5))
+                    q_right = quaternion_multiply(uncast_quaternion(c), q_right)
+                    my_client.add_arrow(posx, posy, q_right, color=(1, 1, 0))
                     my_client.send_goal(a,b,c,frame="map")
-                    my_client.add_arrow(a,b,c, color=(0, 1, 0), pos_z=0.48)
                     break
                 else:
                     my_client.cancel_goal()

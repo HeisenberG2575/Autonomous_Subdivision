@@ -60,7 +60,7 @@
    
   <!-- RGB-D related topics -->
   <arg name="rgb_topic"               default="/mrt/camera/color/image_raw" />
-  <arg name="depth_topic"             default="/mrt/camera/depth/image_rect_raw" />
+  <arg name="depth_topic"             default="/mrt/camera/aligned_depth_to_color/image_raw" />
   <arg name="camera_info_topic"       default="/mrt/camera/color/camera_info" />
   <arg name="depth_camera_info_topic" default="/mrt/camera/depth/camera_info" />
   
