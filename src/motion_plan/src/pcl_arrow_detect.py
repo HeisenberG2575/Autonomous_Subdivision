@@ -192,6 +192,7 @@ class ArrowDetector:
         # ps.append(downpcd.get_centre())
 
         if visualize:
+            pcd = pcd.scale(1/1000.0, [0,0,0])
             lines = [[0, 1], [1, 2], [2, 3], [3, 0]]
             colors = [[1, 0, 0] for i in range(len(lines))]
             line_set = o3d.geometry.LineSet(
@@ -223,7 +224,9 @@ class ArrowDetector:
             plane_model, _ = pcd.segment_plane(
                 distance_threshold=0.01, ransac_n=3, num_iterations=500
             )
-        except:
+        except Exception as e:
+            print("got error in plane seg")
+            print(e)
             return 0
         [a, b, c, d] = plane_model
         a, b, c, d = (-a, -b, -c, -d) if d > 0 else (a, b, c, d)
@@ -242,6 +245,8 @@ class ArrowDetector:
 
         # Convert the corners array to have type float64
         bounding_polygon = corners.astype("float64")
+        bounding_polygon = bounding_polygon*1000
+        z = z*1000
 
         # Create a SelectionPolygonVolume
         vol = o3d.visualization.SelectionPolygonVolume()
@@ -253,6 +258,8 @@ class ArrowDetector:
         vol.orthogonal_axis = "Z"
         vol.axis_max = max(z,np.max(bounding_polygon[:, 2])) + 0.2
         vol.axis_min = min(z,np.min(bounding_polygon[:, 2])) - 0.2
+        # print(f"max: {max(z,np.max(bounding_polygon[:, 2])) + 0.2}, min: {min(z,np.min(bounding_polygon[:, 2])) - 0.2}")
+        # print(np.max(bounding_polygon), "z: ", z)
 
         # Set all the Z values to 0 (they aren't needed since we specified what they
         # should be using just vol.axis_max and vol.axis_min).
@@ -495,7 +502,7 @@ class ArrowDetector:
             if far:
                 delta=1
             else:
-                delta=2
+                delta=3
             corners = [
                 self.pixel_to_3d(im_x, im_y)
                 for im_x, im_y in [(x+delta, y+delta), (x + w-delta, y+delta), (x + w-delta, y + h-delta), (x+delta, y + h-delta)]
@@ -523,7 +530,7 @@ class ArrowDetector:
 
             if far == False:
                 print("getting orientation")
-                orient = self.get_orientation(corners,z=z, visualize=visualize) * 180 / np.pi
+                orient = self.get_orientation(corners,z=x, visualize=visualize) * 180 / np.pi
                 # print(orient)
         if far == True:
             orient = 0
@@ -955,7 +962,7 @@ if __name__ == "__main__":
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
         rospy.sleep(5)
         while not rospy.is_shutdown():
-            found, pos, orient, timestamp = checker.arrow_detect(far=False, visualize=True)
+            found, pos, orient, timestamp, cnt_area = checker.arrow_detect(far=False, visualize=True)
             print("Found: ", found)
             found,val,cone_dist=checker.cone_detect(visualize=True)
             rate.sleep()

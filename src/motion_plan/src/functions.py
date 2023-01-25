@@ -90,7 +90,9 @@ class client:
                 else:
                     found_arr.reverse()
                     idx = len(found_arr) - found_arr.index(True) - 1
-                    return True, pos_arr[idx], orient[idx], timestamp[idx]
+                    print("foundddddddd\n\n\n")
+                    return True, pos_arr[idx], orient_arr[idx], timestamp_arr[idx]
+            return False, None, None, timestamp
         else:
             return self.arrow_detector.arrow_detect(far=far, visualize=False)[:-1]
 
