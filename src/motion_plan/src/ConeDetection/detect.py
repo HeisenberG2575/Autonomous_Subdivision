@@ -61,7 +61,7 @@ new_xyxy = np.array([0.0, 0.5, 0.0, 0.0])
 
 @smart_inference_mode()
 def run(
-        weights=ROOT / 'yolov5s.pt',  # model path or triton URL
+        weights=ROOT / 'weights/best.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
@@ -232,7 +232,7 @@ def run(
 
 class Detector:
     def __init__(self,
-            weights=ROOT / 'ConeDetection/weights/best.pt',  # model path or triton URL
+            weights=ROOT / 'weights/best.pt',  # model path or triton URL
             data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
             imgsz=(640, 640),  # inference size (height, width)
             conf_thres=0.25,  # confidence threshold
@@ -276,7 +276,11 @@ class Detector:
         self.model.warmup(imgsz=(1 if self.pt or self.model.triton else self.bs, 3, *imgsz))  # warmup
         self.seen, self.windows, self.dt = 0, [], (Profile(), Profile(), Profile())
 
-    def run_on_img(self, source):
+    def run_on_img(self, source, filter=True):
+        # if filter:
+        #     hsv = cv2.cvtColor(source, cv2.COLOR_BGR2HSV)
+        #     mask = cv2.inRange(hsv, (0,100,20), (30, 255, 255))
+        #     source = cv2.bitwise_and(source, source, mask=mask)
         im = letterbox(source, IMG_SZ, stride=STRIDE, auto=AUTO)[0]  # padded resize
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         im = np.ascontiguousarray(im)  # contiguous
