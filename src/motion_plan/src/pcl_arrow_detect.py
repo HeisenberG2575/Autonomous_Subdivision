@@ -277,19 +277,29 @@ class ArrowDetector:
         #                                   up=[1.0, 0.0, 0.0])
         return cropped_pcd
     def cone_detect(self,visualize=False):
-
         img=self.frame.copy()
-        xyxy, bb_img, conf = self.detector.run_on_img(img)
-        print(conf)
-        if len(conf) == 0:
-            return False, None, None
-        idx=np.argmax(conf)
-        cone_bb=xyxy[idx]
-        if conf[idx]>CONE_THRESH:
-            found=True
-            print("Cone Detected")
-        else:
-            return False,None,None
+        no_detected = 0
+        rate = rospy.Rate(20)
+        for i in range(5):
+            xyxy, bb_img, conf = self.detector.run_on_img(img)
+            print(conf)
+            if len(conf) == 0:
+                continue
+            #   return False, None, None
+            idx=np.argmax(conf)
+            if conf[idx]>CONE_THRESH:
+                # found=True
+                cone_bb=xyxy[idx]
+                no_detected += 1
+                print("Cone Detected")
+            else:
+                continue
+                # return False,None,None
+            rate.sleep()
+
+        if(no_detected >= 3):
+            found = True
+        else:  return False, None, None
         im_x=(cone_bb[0]+cone_bb[2])/2
         im_y=(cone_bb[1]+cone_bb[3])/2
         ray,pos_tup=self.pixel_to_3d(im_x,im_y,cone=True)
@@ -415,7 +425,7 @@ class ArrowDetector:
                         norm_mean = cnt_mean/np.linalg.norm(cnt_mean)
                         unit_vec = np.array([1, 1, 1])/np.sqrt(3)
                         # print("cosine dist2: ", np.dot(norm_mean, unit_vec))
-                        if np.dot(norm_mean, unit_vec) < OFFSET or np.mean(cnt_mean) < 255/2 + COLOR_OFFSET:
+                        if np.dot(norm_mean, unit_vec) < OFFSET:
                             continue
                         direction = dirct
                         max_cnt_area = cnt_area
@@ -536,7 +546,7 @@ class ArrowDetector:
         # return found, theta, orient   #theta and orient wrt forward direction, in degree
         # cv2.imwrite(path + "/src/arrow_frames/Arrow_detection@t="+str(rospy.Time.now())+".png", img)
         # cv2.imwrite(path + "/src/arrow_frames/og@t="+str(rospy.Time.now())+".png", self.frame)
-        return found, pos, orient, ret_stamp
+        return found, pos, orient, ret_stamp, max_cnt_area
 
 
 
@@ -637,26 +647,35 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 # ____________________________________ Image Processing
 
 
-def preprocess(img):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_equalized = cv2.equalizeHist(img_gray)
+def preprocess(img, algo_type=0):
 
-    _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
-    # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    img_blur = cv2.bilateralFilter(img_equalized, 5, 75, 75)
-    kernel = np.ones((3, 3))
-    # img_erode = cv2.erode(img_equalized, kernel, iterations=1)
-    # img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_blur, CANNY_THRES, CANNY_THRES)
+    if algo_type == 0:
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_equalized = cv2.equalizeHist(img_gray)
 
-    # cv2.imshow("Img equalized", img_equalized)
-    # cv2.imshow("Img blur", img_blur)
-    # cv2.imshow("Erode", img_erode)
-    # cv2.imshow("Dilate", img_dilate)
-    # cv2.imshow("Canny", img_canny)
-    # cv2.imshow("Thres", img_thres)
+        _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
+        #img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
+
+        # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
+        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        kernel = np.ones((3, 3))
+
+        final_img = cv2.Canny(img_blur, 250, 250, apertureSize=5)
+    elif algo_type == 1:
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_equalized = cv2.equalizeHist(img_gray)
+
+        _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        kernel = np.ones((3, 3))
+
+        canny_img = cv2.Canny(img_blur, 250, 250, apertureSize=3)
+        img_dilate = cv2.dilate(canny_img, kernel, iterations=1)
+        final_img = cv2.erode(img_dilate, kernel, iterations=1)
+
+    # cv2.imshow("Preprocessed", final_img)
     # cv2.waitKey(0)
-    return img_canny
+    return final_img
 
 def find_tip(points, convex_hull):
     length = len(points)

@@ -21,6 +21,10 @@ path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
 ROOT_LINK = "root_link"
 
+USE_ROBUST_ARROW_DETECT = 1
+MAX_ARROW_DETECT = 3
+ARROW_MAX_ITER = 7
+CNT_AREA_THRES = 20
 
 class client:
     def __init__(self):
@@ -67,7 +71,28 @@ class client:
 
     def arrow_detect(self, far=True):
         # returns Found(0/1), position(x,y,z), theta(degrees; rover forward=0)
-        return self.arrow_detector.arrow_detect(far=far, visualize=False)
+        if USE_ROBUST_ARROW_DETECT:
+            found_arr, cnt_area_arr, pos_arr, orient_arr, timestamp_arr = [], [], [], [], []
+            count = 0
+            for i in range(ARROW_MAX_ITER):
+                found, pos, orient, timestamp, cnt_area = self.arrow_detector.arrow_detect(far=far, visualize=False)
+                found_arr.append(found)
+                pos_arr.append(pos)
+                orient_arr.append(orient)
+                cnt_area_arr.append(cnt_area)
+                timestamp_arr.append(timestamp)
+                if found:
+                    count += 1
+            if count >= MAX_ARROW_DETECT:
+                var_arr = [cnt_area_arr[i] for i in range(len(cnt_area_arr)) if found_arr[i]]
+                if np.var(np.array(var_arr)) > CNT_AREA_THRES:
+                    return False, None, None, timestamp
+                else:
+                    found_arr.reverse()
+                    idx = len(found_arr) - found_arr.index(True) - 1
+                    return True, pos_arr[idx], orient[idx], timestamp[idx]
+        else:
+            return self.arrow_detector.arrow_detect(far=far, visualize=False)[:-1]
 
     def mapCallBack(self, data):
         self.mapData = data

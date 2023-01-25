@@ -11,50 +11,35 @@ COLOR_OFFSET = 0
 
 
 
-def preprocess(img, adaptive=False):
+def preprocess(img, algo_type=1):
     
-    
-    if adaptive:
+    if algo_type == 0:
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
-        kernel = np.ones((3, 3))
+        img_equalized = cv2.equalizeHist(img_gray)
+
+        _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
+        #img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
         
-        if adaptive:
-            img_blur = cv2.medianBlur(img_thres, 5)
-            # cv2.imshow("Image Blur", img_blur)
+        # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
+        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        kernel = np.ones((3, 3))
 
-            img_erode = cv2.erode(img_blur, kernel, iterations=1)
-            # cv2.imshow("Image Erode", img_erode)
+        final_img = cv2.Canny(img_blur, 250, 250, apertureSize=5)
+    elif algo_type == 1:
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_equalized = cv2.equalizeHist(img_gray)
 
-            img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-            # cv2.imshow("Image Dilate", img_dilate)
-        else:
-            img_dilate = img_thres
-        img_canny = cv2.Canny(img_dilate, 200, 200)
-        # cv2.imshow("Image Canny", img_canny)
+        _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
+        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        kernel = np.ones((3, 3))
 
-        # cv2.waitKey(0)
+        canny_img = cv2.Canny(img_blur, 250, 250, apertureSize=3)
+        img_dilate = cv2.dilate(canny_img, kernel, iterations=1)
+        final_img = cv2.erode(img_dilate, kernel, iterations=1)
 
-        return img_canny
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_equalized = cv2.equalizeHist(img_gray)
-
-    _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
-    # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    # img_blur = cv2.bilateralFilter(img_equalized, 5, 75, 75)
-    kernel = np.ones((3, 3))
-    # img_erode = cv2.erode(img_equalized, kernel, iterations=1)
-    # img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_thres, 250, 250)
-
-    # cv2.imshow("Img equalized", img_equalized)
-    # cv2.imshow("Img blur", img_blur)
-    # cv2.imshow("Erode", img_erode)
-    # cv2.imshow("Dilate", img_dilate)
-    # cv2.imshow("Canny", img_canny)
-    # cv2.imshow("Thres", img_thres)
+    cv2.imshow("Preprocessed", final_img)
     # cv2.waitKey(0)
-    return img_canny
+    return final_img
 
 def find_tip(points, convex_hull):
     length = len(points)
@@ -160,7 +145,7 @@ def rotate_image(image, angle):
   result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
   return result, rot_mat
 
-def arrow_detect(frame):
+def arrow_detect(frame, algo_type=0):
     # Arrow detection
     img = frame.copy()
     #self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
@@ -172,7 +157,7 @@ def arrow_detect(frame):
     direction = None
     bounding_box = None
     contours, _ = cv2.findContours(
-        preprocess(img), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+        preprocess(img, algo_type=algo_type), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
     )[-2:]
     # cv2.imshow("Image", preprocess(img))
     # cv2.waitKey(0)
@@ -182,7 +167,7 @@ def arrow_detect(frame):
     for i, cnt in enumerate(contours):
         cnt_area = cv2.contourArea(cnt)
         # filtering using area
-        if cnt_area < 60:
+        if cnt_area < 70:
             continue
 
         # filtering using color of arrow
@@ -191,7 +176,7 @@ def arrow_detect(frame):
         cnt_mean = np.array(cv2.mean(img, mask=arrow_mask)[:3])
 
         cv2.imshow("Arrow mask", arrow_mask)
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
         mag_mean = np.linalg.norm(cnt_mean)
         norm_mean = cnt_mean/mag_mean
         unit_vec = np.array([1, 1, 1])/np.sqrt(3)
@@ -199,13 +184,11 @@ def arrow_detect(frame):
             continue
 
         peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
+        approx = cv2.approxPolyDP(cnt, 0.020 * peri, True)
         hull = cv2.convexHull(approx, returnPoints=False)
         sides = len(hull)
 
         if (sides == 5 or sides == 4) and sides + 2 == len(approx):
-            # cv2.imshow("arrow mask", arrow_mask)
-            # cv2.waitKey(0)
             arrow_tip, _ = find_tip(approx[:, 0, :], hull.squeeze())
             rect, dirct = find_tail_rect(approx[:, 0, :], hull.squeeze())
             if arrow_tip and rect is not None:
@@ -246,14 +229,14 @@ def arrow_detect(frame):
                     bb_cnt = np.array([np.array([[x+w, y]]), np.array([[x+w, y+h]]), np.array([[x, y+h]]), np.array([[x, y]])])
                     cv2.drawContours(background_mask, [bb_cnt], -1, 255, -1)
                     background_mask = background_mask - arrow_mask
-                    # cv2.imshow("Image Bg 1", background_mask)
+                    cv2.imshow("Image Bg 1", background_mask)
                     # cv2.waitKey(0)
 
                     cnt_mean = np.array(cv2.mean(img, mask=background_mask)[:3])
                     mag_mean = np.linalg.norm(cnt_mean)
                     norm_mean = cnt_mean/mag_mean
                     unit_vec = np.array([1, 1, 1])/np.sqrt(3)
-                    if np.dot(norm_mean, unit_vec) < OFFSET or np.mean(cnt_mean) < 255/2 + COLOR_OFFSET:
+                    if np.dot(norm_mean, unit_vec) < OFFSET:
                         continue
                     direction = dirct
                     max_cnt_area = cnt_area
@@ -279,14 +262,20 @@ if __name__ == '__main__':
     print("Starting arrow detection script")
     ''''''
     args = parser.parse_args()
+    total_correct = 0
     if args.dir_detect:
         images = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob("*.png")
         num=0
         num2 = 0
         for fname in images:
             sample_img=cv2.imread(fname)
-            found, _, _ = arrow_detect(sample_img)
-            print("Found :", found)
+            found0, _, _ = arrow_detect(sample_img, algo_type=0)
+            found1, _, _ = arrow_detect(sample_img, algo_type=1)
+
+            print("Found :", found0 or found1)
+            if found1:
+                total_correct += 1
+        print(f"Total correct : {total_correct}/{len(images)}")
             # if direction == 1:
             #     direction = 'Right'
             # else:
@@ -296,7 +285,7 @@ if __name__ == '__main__':
             #     print("Arrows detected:", num)
             #     output = cv2.putText(output, direction + ", angle:{:.2f}".format(orient[0]), (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
             #                     1, (255, 0, 0), 2, cv2.LINE_AA)
-            #     cv2.imshow("Result", output)
+            # cv2.imshow("Result", output)
             #     cv2.waitKey(0)
             # else:
             #     print("Not found")
@@ -309,7 +298,7 @@ if __name__ == '__main__':
         time_max = 0
         time_sum = 0
         n_detected = 0
-        capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture(2)
         while True:
             ret_val, frame = capture.read()
             if ret_val == False:
@@ -317,38 +306,18 @@ if __name__ == '__main__':
                 time.sleep(1)
                 continue
             start = time.time()
-            found, _, _ = arrow_detect(frame)
+            found0, _, _ = arrow_detect(frame, 0)
+            found1, _, _ = arrow_detect(frame, 1)
+            found = found1
             end = time.time()
             if found == True:
                 time_sum += end-start
                 n_detected += 1
                 if end-start > time_max:
                     time_max = end - start
-            if direction == 1:
-                direction = 'Right'
-            else:
-                direction = 'Left'
-            # font
-            font = cv2.FONT_HERSHEY_SIMPLEX
 
-            # org
-            org = (50, 50)
+            print(f"{found}, time : {time_max}")
 
-            # fontScale
-            fontScale = 1
-
-            # Blue color in BGR
-            color = (255, 0, 0)
-
-            # Line thickness of 2 px
-            thickness = 2
-
-            output = cv2.putText(output, direction + " \n"+ str(orient), org, font,
-                                fontScale, color, thickness, cv2.LINE_AA)
-
-            cv2.imshow("Arrow", output)
+            cv2.imshow("Arrow", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        if n_detected > 0:
-            print("Time taken(avg): ",time_sum/n_detected)
-            print("Time taken(max): ",time_max)
