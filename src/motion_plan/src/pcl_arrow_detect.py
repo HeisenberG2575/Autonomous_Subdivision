@@ -512,6 +512,7 @@ class ArrowDetector:
             print("Corners 3d",corners)
 
             if far == False:
+                print("getting orientation")
                 orient = self.get_orientation(corners,z=z, visualize=visualize) * 180 / np.pi
                 # print(orient)
         if far == True:
@@ -642,11 +643,11 @@ def preprocess(img):
 
     _, img_thres = cv2.threshold(img_equalized, 70, 255, cv2.THRESH_TOZERO)
     # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-    # img_blur = cv2.bilateralFilter(img_equalized, 5, 75, 75)
+    img_blur = cv2.bilateralFilter(img_equalized, 5, 75, 75)
     kernel = np.ones((3, 3))
     # img_erode = cv2.erode(img_equalized, kernel, iterations=1)
     # img_dilate = cv2.dilate(img_erode, kernel, iterations=1)
-    img_canny = cv2.Canny(img_thres, CANNY_THRES, CANNY_THRES)
+    img_canny = cv2.Canny(img_blur, CANNY_THRES, CANNY_THRES)
 
     # cv2.imshow("Img equalized", img_equalized)
     # cv2.imshow("Img blur", img_blur)

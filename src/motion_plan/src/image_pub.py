@@ -17,6 +17,9 @@ class ImagePublisher:
         else:
             self.get_camera()
             self.vid = cv2.VideoCapture(self.device_num)
+        self.vid.set(cv2.CAP_PROP_FRAME_WIDTH,160)
+        self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT,120)
+        print(f'id: {self.id} w,h: {self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)}, {self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)}')
         self.counter=0
         self.br = CvBridge()
         rate = rospy.Rate(10)
@@ -24,9 +27,10 @@ class ImagePublisher:
         while not rospy.is_shutdown():
             ret, frame = self.vid.read()
             if not ret:
-                print("ret == False")
-            # print(ret)
-            frame=cv2.resize(frame,(256,144))
+                print(f"id: {self.id}: ret == False")
+            # rospy.loginfo(ret)
+            # print(frame.shape)
+            # frame=cv2.resize(frame,(256,144))
             # cv2.imshow("frame", frame)
             # cv2.waitKey(10)
             ros_img = self.br.cv2_to_imgmsg(frame,header=Header(seq=self.counter,stamp=rospy.Time.now(),frame_id=FRAME))

@@ -138,11 +138,12 @@ class client:
             rospy.loginfo("The robot failed to reach the destination")
             return False
 
-    def move_to_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=0.5,ahead=0.75):
+    def find_xy_off_goal(self, xGoal, yGoal, q=None, frame="map", off_dist=0.5,ahead=0.75):
         goal_initial=self.find_off_goal(xGoal, yGoal, q=q, frame=frame, offset=(-0.0, off_dist, 0, 0))
         goal_final=just_ahead(*goal_initial,off_dist=ahead)
+        return goal_final
         #print('move to off goal',goal_initial,goal_final)
-        return self.move_to_goal(*goal_final)
+        # return self.move_to_goal(*goal_final)
 
     def find_off_goal(self, xGoal, yGoal, q=None, frame="map", offset=(0, 0, 0, 0)):
         if frame == ROOT_LINK:

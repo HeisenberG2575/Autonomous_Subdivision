@@ -27,8 +27,9 @@ static_layer:
 obstacle_layer:
 
   # Definition of the sensors/observation sources
-  observation_sources: scan
+  observation_sources: scan three_d_scan
   scan: {sensor_frame: sensor_laser, data_type: LaserScan, topic: scan_filtered, marking: true, clearing: true}
+  three_d_scan: {sensor_frame: mrt/camera_link, data_type: PointCloud2, topic: /mrt/camera/depth/color/points, marking: false, clearing: true}
 
 #  # Parameters of the source: laser_scan_right
 #  laser_scan_right:

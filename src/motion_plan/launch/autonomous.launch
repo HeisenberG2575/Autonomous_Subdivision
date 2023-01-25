@@ -5,10 +5,10 @@
     <!-- <arg name="cartographer" default="0"/> -->
     <!-- <arg name="zed2" default="0"/> -->
     <arg name="lidar" default="1"/>
-    <arg name="simulation" default="1"/>
+    <arg name="simulation" default="0"/>
     <arg name="gazebo_gui" default="0"/>
     <arg name="gps" default="1"/>
-    <arg name="assigner" default="1"/>
+    <arg name="assigner" default="0"/>
     <include file="$(find bot_description)/launch/spawn.launch" if="$(arg simulation)">
         <arg name="gui" value="$(arg gazebo_gui)"/>
     </include>

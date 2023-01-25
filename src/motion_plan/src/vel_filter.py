@@ -23,10 +23,10 @@ class filter():
         data.linear.x = min(abs(data.linear.x), MAX_LINEAR)*np.sign(data.linear.x)
         if abs(data.angular.z) > 0.15 or abs(data.linear.x) + 0.05 <abs(data.angular.z):
             drive.direction = "anticlockwise" if data.angular.z>0 else "clockwise"
-            drive.speed = 50*abs(data.angular.z)/MAX_ANGULAR
+            drive.speed = 80*abs(data.angular.z)/MAX_ANGULAR
         else :
             drive.direction = "forward" if data.linear.x>0 else "backward"
-            drive.speed = 100*abs(data.linear.x)/MAX_LINEAR
+            drive.speed = 120*abs(data.linear.x)/MAX_LINEAR
         self.pub.publish(drive)
 
 if __name__ == '__main__':

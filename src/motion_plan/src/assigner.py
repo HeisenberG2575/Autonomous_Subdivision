@@ -14,21 +14,22 @@ def main_node():
         0, 0, (0, 0, 0, 1)
     )  # prev always in map frame
     i = 1  # iteration for moving just ahead of the previous goal
+    initial = True
 
     while not rospy.is_shutdown():
-        if i > 8:
+        if i > 12:
             found, pos, orient = my_client.recovery(far=True)
             i = 0
-        if len(my_client.completed_list) == 5:
-            rospy.loginfo("End Goal found")
-            success = my_client.move_to_goal(
-                12, 6, q=(0, 0, 1 / np.sqrt(2), 1 / np.sqrt(2))
-            )
-            if success:
-                rospy.loginfo("Completed all goals")
-            else:
-                rospy.loginfo("Failed")
-            break
+        # if len(my_client.completed_list) == 5:
+        #     rospy.loginfo("End Goal found")
+        #     success = my_client.move_to_goal(
+        #         12, 6, q=(0, 0, 1 / np.sqrt(2), 1 / np.sqrt(2))
+        #     )
+        #     if success:
+        #         rospy.loginfo("Completed all goals")
+        #     else:
+        #         rospy.loginfo("Failed")
+        #     break
         count = 0
         found, pos, orient, timestamp = my_client.arrow_detect(far=True)
 
@@ -130,9 +131,10 @@ def main_node():
                     my_client.add_arrow(
                         posx, posy, q, color=(0, 1, 0), pos_z=0.48
                     )  # Add Rviz arrow marker, map frame
-                    success = my_client.move_to_off_goal(
+                    success = my_client.move_to_goal(*my_client.find_xy_off_goal(
                         posx, posy, q=q, frame="map", off_dist=1, ahead=0.75
-                    )
+                    ))
+                    initial = False
                     if success == True:
                         # my_client.add_arrow(*my_client.bot_to_map(posx, posy,
                         # q, frame="mrt/camera_link"), color=(0,1,1))
@@ -143,7 +145,11 @@ def main_node():
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
         if not found:
-            nearby_goal = my_client.move_to_off_goal(prev_x, prev_y, prev_q,off_dist=0.3, ahead=0.7 + 0.7 * i)
+            if initial:
+                offset = 0
+            else:
+                offset = 0.5
+            nearby_goal = my_client.find_xy_off_goal(prev_x, prev_y, prev_q,off_dist=offset, ahead=0.7 + 0.7 * i)
             my_client.send_goal(*nearby_goal, frame="map")
             rospy.sleep(6.2)  # Sleep for 1-2s and let the bot move towards the goal
             i += 1
