@@ -11,7 +11,7 @@ COLOR_OFFSET = 0
 
 
 
-def preprocess(img, algo_type=0):
+def preprocess(img, algo_type=1):
     
     if algo_type == 0:
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
