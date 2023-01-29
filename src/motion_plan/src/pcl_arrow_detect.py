@@ -654,7 +654,7 @@ def convertCloudFromRosToOpen3d(ros_cloud):
 # ____________________________________ Image Processing
 
 
-def preprocess(img, algo_type=0):
+def preprocess(img, algo_type=1):
 
     if algo_type == 0:
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -664,7 +664,7 @@ def preprocess(img, algo_type=0):
         #img_thres = cv2.adaptiveThreshold(img_gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,25,2)
 
         # img_blur = cv2.GaussianBlur(img_thres, (5, 5), 1)
-        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        img_blur = cv2.bilateralFilter(img_thres, 3, 75, 75)
         kernel = np.ones((3, 3))
 
         final_img = cv2.Canny(img_blur, 250, 250, apertureSize=5)
@@ -673,10 +673,10 @@ def preprocess(img, algo_type=0):
         img_equalized = cv2.equalizeHist(img_gray)
 
         _, img_thres = cv2.threshold(img_gray, 70, 255, cv2.THRESH_TOZERO)
-        img_blur = cv2.bilateralFilter(img_thres, 5, 75, 75)
+        img_blur = cv2.bilateralFilter(img_thres, 3, 75, 75)
         kernel = np.ones((3, 3))
 
-        canny_img = cv2.Canny(img_blur, 250, 250, apertureSize=3)
+        canny_img = cv2.Canny(img_blur, 150, 200, apertureSize=3)
         img_dilate = cv2.dilate(canny_img, kernel, iterations=1)
         final_img = cv2.erode(img_dilate, kernel, iterations=1)
 
@@ -809,7 +809,7 @@ def get_arrow_arr(img, debug=True):
         cv2.imshow("Image", img)
         cv2.waitKey(0)
     for cnt in contours:
-        if cv2.contourArea(cnt) < 200:
+        if cv2.contourArea(cnt) < 80:
             continue
         peri = cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
