@@ -236,19 +236,21 @@ class client:
         rospy.loginfo("Initiating recovery")
         found, pos, orient, timestamp = self.arrow_detect(far)
         j = 0
-        while found == False and j < 3:
-            x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
-            q = uncast_quaternion(q)
-            q = quaternion_multiply(q, (0, 0, np.sin(0.2), np.cos(0.2)))
-            self.move_to_goal(x, y, q)
-            found, pos, orient, timestamp = self.arrow_detect(far)
-            j += 1
-        j = 0
         while found == False and j < 6:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
-            q = quaternion_multiply(q, (0, 0, np.sin(-0.2), np.cos(-0.2)))
+            q = quaternion_multiply(q, (0, 0, np.sin(0.1), np.cos(0.1)))
             self.move_to_goal(x, y, q)
+            rospy.sleep(1.0)
+            found, pos, orient, timestamp = self.arrow_detect(far)
+            j += 1
+        j = 0
+        while found == False and j < 12:
+            x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+            q = uncast_quaternion(q)
+            q = quaternion_multiply(q, (0, 0, np.sin(-0.1), np.cos(-0.1)))
+            self.move_to_goal(x, y, q)
+            rospy.sleep(1.0)
             found, pos, orient, timestamp = self.arrow_detect(far)
             j += 1
         if found:

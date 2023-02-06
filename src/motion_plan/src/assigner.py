@@ -17,7 +17,7 @@ def main_node():
     initial = True
 
     while not rospy.is_shutdown():
-        if i > 12:
+        if i > 8:
             found, pos, orient = my_client.recovery(far=True)
             i = 0
         # if len(my_client.completed_list) == 5:
@@ -105,7 +105,7 @@ def main_node():
                 if found == True:
                     # my_client.cancel_goal()
                     # TODO change to 20
-                    rospy.sleep(10)
+                    rospy.sleep(30)
                     success = my_client.move_to_goal(
                         *my_client.find_off_goal(
                             posx, posy, q=q_p, offset=(-1.5, 0, 0, 0)

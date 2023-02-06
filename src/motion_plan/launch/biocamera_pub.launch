@@ -1,0 +1,16 @@
+
+<launch>
+    <arg name="compressed" default="1"/>
+    <node name="bioimage_pub" pkg="motion_plan" type="bioimage_pub.py" unless="$(arg compressed)" output="screen" respawn="true">
+        <rosparam param="camera_number">3</rosparam>
+        <rosparam param="ros_topic">/mrt/bio/cam1</rosparam>
+    </node>
+    <!-- <node name="bioimage_pub2" pkg="motion_plan" type="bioimage_pub.py" unless="$(arg compressed)" output="screen"> -->
+    <!--     <rosparam param="camera_number">6</rosparam> -->
+    <!--     <rosparam param="ros_topic">/mrt/bio/cam2</rosparam> -->
+    <!-- </node> -->
+    <node name="bioimage_pub3" pkg="motion_plan" type="bioimage_pub.py" unless="$(arg compressed)" output="screen" respawn="true">
+        <rosparam param="camera_number">0</rosparam>
+        <rosparam param="ros_topic">/mrt/bio/microscope</rosparam>
+    </node>
+</launch>
