@@ -54,7 +54,7 @@ class client:
         self.lidar_data = None
         rospy.Subscriber("/map", OccupancyGrid, self.mapCallBack)
         rospy.Subscriber("/scan_filtered", LaserScan, self.lidar_callback)
-        self.arrow_detector = ArrowDetector(sim=True)
+        self.arrow_detector = ArrowDetector()
         print("ArrowDetector Launched")
         self.marker_array_pub = rospy.Publisher(
             "/detected_arrow", MarkerArray, queue_size=10
