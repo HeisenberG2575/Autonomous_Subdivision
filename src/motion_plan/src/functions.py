@@ -9,6 +9,7 @@ from actionlib_msgs.msg import GoalStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Point, Quaternion, PoseStamped, Pose
 from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Float64MultiArray
 from visualization_msgs.msg import Marker, MarkerArray
 from tf import transformations
 from tf.transformations import quaternion_multiply
@@ -16,11 +17,12 @@ import tf
 from nav_msgs.msg import OccupancyGrid
 from pcl_arrow_detect import ArrowDetector
 from numpy import nan
+import cv2
+import geonav_transform.geonav_conversions as gc
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
 ROOT_LINK = "root_link"
-
 USE_ROBUST_ARROW_DETECT = 1
 MAX_ARROW_DETECT = 3
 ARROW_MAX_ITER = 7
@@ -33,7 +35,10 @@ class client:
 
         # define a client for to send goal requests to the move_base server through a SimpleActionClient
         self.ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-
+        self.olat,self.olon=49.8999997, 8.90000001
+        # rospy.Subscriber('/LatLon',Float64MultiArray,self.gps_callback)
+        # rospy.wait_for_message("/LatLon", Float64MultiArray, timeout=5)
+        
         # wait for the action server to come up
         while (
             not self.ac.wait_for_server(rospy.Duration.from_sec(2.0))
@@ -49,7 +54,7 @@ class client:
         self.lidar_data = None
         rospy.Subscriber("/map", OccupancyGrid, self.mapCallBack)
         rospy.Subscriber("/scan_filtered", LaserScan, self.lidar_callback)
-        self.arrow_detector = ArrowDetector()
+        self.arrow_detector = ArrowDetector(sim=True)
         print("ArrowDetector Launched")
         self.marker_array_pub = rospy.Publisher(
             "/detected_arrow", MarkerArray, queue_size=10
@@ -60,7 +65,17 @@ class client:
         self.last_good_location = self.bot_to_map(0, 0, (0, 0, 0, 1))
         rospy.Rate(5).sleep()  #
         # rospy.spin()
+    def gps_callback(self,data):
+        self.olat,self.olon=data.data[0],data.data[1]
 
+    def xy2gps(self, x, y):
+        return gc.xy2ll(x,y,self.olat,self.olon)
+
+    def gps2xy(self, lat, lon):
+        return gc.ll2xy(lat,lon,self.olat,self.olon)
+    def ar_detect(self):
+        found,theta,pts=self.arrow_detector.ar_detect()
+        return found,theta,pts
     def cone_detect(self):
         print(self.arrow_detector.cone_detect())
         found,val,cone_distance = self.arrow_detector.cone_detect()
@@ -148,6 +163,15 @@ class client:
         )
         self.add_arrow(xGoal, yGoal, q)
         self.ac.send_goal(goal)
+
+    def send_goal_gps(self, Lat, Lon, q = None, frame = "map"):
+        x, y = self.gps2xy(Lat, Lon)
+        self.send_goal(x, y, q, frame)
+
+    def move_to_off_goal_gps(self, Lat, Lon, q=None, frame="map", off_dist=1.5):
+        x, y = self.gps2xy(Lat, Lon)
+        rospy.loginfo("off goal"+str(x)+str(y))
+        return self.move_to_goal(*self.find_off_goal(x,y, q=q, frame=frame, offset=(0,off_dist,0,0)), frame=frame)
 
     def move_to_goal(self, xGoal, yGoal, q=None, frame="map"):  # frame=ROOT_LINK
         if frame == ROOT_LINK:
@@ -268,6 +292,47 @@ class client:
             return False, None, None, timestamp
         else:
             return found, pos, orient, timestamp
+
+    def urc_recovery(self,type=1):
+        rospy.loginfo("Initiating recovery")
+        found, theta, pts = self.ar_detect()
+        j = 0
+        done=[0,[],[]]
+        while j < 10:
+            x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+            q = uncast_quaternion(q)
+            q = quaternion_multiply(q, (0, 0, np.sin(0.3), np.cos(0.3)))
+            self.move_to_goal(x, y, q)
+            rospy.sleep(1.0)
+            found, theta, pts = self.ar_detect()
+            print(found, theta, pts)
+            print('recovery stage ',j)
+            j += 1
+            if found==type:
+                break
+            if found==1 and type==2:
+                done[0]+=1
+                done[1].extend(theta)
+                done[2].extend(pts)
+                if done[0]==2:
+                    print('rec return',done[0],done[1],done[2])
+                    return done[0],done[1],done[2]
+        j = 0
+        # while found == False and j < 12:
+        #     x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+        #     q = uncast_quaternion(q)
+        #     q = quaternion_multiply(q, (0, 0, np.sin(-0.2), np.cos(-0.2)))
+        #     self.move_to_goal(x, y, q)
+        #     rospy.sleep(1.0)
+        #     found, theta, pts = self.ar_detect()
+        #     print(found, theta, pts)
+        #     print('recovery stage ',j)
+        #     j += 1
+        if found>0:
+            return found, theta, pts
+        else:
+            return 0, None, None
+
 
     def add_arrow(
         self, pos_x, pos_y, q, color=(0.2, 0.5, 1.0), pos_z=0
