@@ -873,7 +873,7 @@ def get_arrow_arr(img, debug=True):
         cv2.imshow("Image", img)
         cv2.waitKey(0)
     for cnt in contours:
-        if cv2.contourArea(cnt) < 200:
+        if cv2.contourArea(cnt) < 80:
             continue
         peri = cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
