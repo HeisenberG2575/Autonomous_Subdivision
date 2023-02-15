@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, rospkg, os
+import numpy as np
 import importlib
 from numpy.linalg import norm
 
@@ -199,11 +200,15 @@ def gps_goals(type, lat, lon):
                             # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
 
                             # move to final positions using AR Tag
-                    perp=(posx2-posx1,posy2-posy1)
-                    
+                    c_x,c_y,q=my_client.bot_to_map(0,0,q)
+                    vec=[posx1-c_x,posy1-c_y]
+                    perp=[-(posy2-posy1)/(posx2-posx1),1]
+                    if np.dot(vec,perp)<0:
+                        perp[0],perp[1]=-perp[0],-perp[1]
+                    q=functions.q_from_vector3D([perp[0],perp[1],0])
                     posx = (posx1 + posx2) / 2.0
                     posy = (posy1 + posy2) / 2.0
-                    _,__,q=my_client.bot_to_map(0,0,q)
+                    
                     my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-0.5))
                     success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     if success == True:

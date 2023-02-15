@@ -27,7 +27,7 @@ USE_ROBUST_ARROW_DETECT = 1
 MAX_ARROW_DETECT = 3
 ARROW_MAX_ITER = 7
 CNT_AREA_THRES = 20
-
+eps=0.5
 class client:
     def __init__(self):
         rospy.init_node("goal_client_node")
@@ -314,14 +314,24 @@ class client:
             if found==type:
                 break
             if found==1 and type==2:
-                done[0]+=1
-                done[1].extend(theta)
-
-                print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
-                done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                if done[0]==1:
+                    comp_x,comp_y,_=self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")
+                    if (comp_x<=done[2][0][0]+eps and comp_x>=done[2][0][0]-eps) and (comp_y>=done[2][0][1]-eps and comp_y<=done[2][0][1]+eps):
+                        pass
+                    else:   
+                        done[0]+=1
+                        done[1].extend(theta)
+                        print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                        done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
                 if done[0]==2:
                     print('rec return',done[0],done[1],done[2])
                     return done[0],done[1],done[2]
+                else:
+                    done[0]+=1
+                    done[1].extend(theta)
+                    print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                    done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+
         j = 0
         # while found == False and j < 12:
         #     x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
