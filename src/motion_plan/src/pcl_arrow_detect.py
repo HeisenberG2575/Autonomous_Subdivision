@@ -14,8 +14,17 @@ from scipy.spatial import cKDTree
 import ros_numpy
 import message_filters
 from numpy import nan
+import copy
 import ConeDetection.detect as cd
 
+path = rospkg.RosPack().get_path("motion_plan")
+MARKERS_MAX = 50
+ROOT_LINK = "root_link"
+CALIB_MTX = np.array([[476.7030836014194, 0.0, 400.5],
+ [0.0, 476.7030836014194, 400.5],
+ [0.0, 0.0, 1.0]])
+DIST = np.array([[ 0.20890098,  0.13254024, -0.03460789, -0.00425681,  0.81484297]])
+DICTIONARY = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
 COLOR_OFFSET = 0
@@ -29,7 +38,8 @@ class ArrowDetector:
     def __init__(self, ros_cloud="/mrt/camera/depth/color/points",
                  ros_image="/mrt/camera/color/image_raw",
                  depth_topic='/mrt/camera/aligned_depth_to_color/image_raw',
-                 info_topic="/mrt/camera/color/camera_info", visualize=False):
+                 info_topic="/mrt/camera/color/camera_info", visualize=False,sim=False):
+        self.sim=sim
         self.br = CvBridge()
         self.detector = cd.Detector()
         self.visualize=visualize
@@ -126,6 +136,8 @@ class ArrowDetector:
         depth = self.lagging_depth[int(y)][int(x)]
         #print(self.lagging_depth[int(y//2)-1:int(y//2)+2][int(x//2)-1:int(x//2)+2])
 
+        if self.sim:
+            return depth
         return depth/1000
 
     def info_callback(self, data):
@@ -338,6 +350,58 @@ class ArrowDetector:
             return found,ray,cone_distance
         return found,pos,cone_distance
 
+    def ar_detect(self):
+        
+        if self.frame is None:
+                return False, None, None
+        img = self.frame.copy()
+        #self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
+        self.lagging_pcd=self.pcd
+        self.lagging_depth = self.depth_im
+        self.lagging_stamp = self.timestamp
+        image = self.frame.copy()
+        h,  w = image.shape[:2]
+        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CALIB_MTX, DIST, (w,h), 1, (w,h))
+        dst = cv2.undistort(image, CALIB_MTX, DIST, None, newcameramtx)
+        img_copy = copy.deepcopy(dst) #copy to image
+        #convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # thresh = 100
+        #converting image to black and white to make the process robust
+        # im_bw = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY)[1]
+        # cv2.imshow("in", im_bw)
+        im_bw = image
+        #Parameters for the detectors
+        parameters =  cv2.aruco.DetectorParameters_create()
+        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
+        #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
+        corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters)
+        # print(corners,ids,rejects)
+        # TODO(Ashwin,Harsh): Use Camera Calibration
+        #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix) 
+        #drawing markers
+        img = cv2.aruco.drawDetectedMarkers(image, corners, ids)
+        
+        if len(corners) > 0:
+                
+                #print the coordinates (Can use the returned values)
+                corners = np.array(corners).reshape(-1,2)
+                # theta = -(np.average(corners, axis=1)[0]/(np.shape(img)[0]) - 0.5)*45*2
+                found = int(len(corners)/4)
+                if self.sim and found>0:
+                    cv2.imshow('q',img)
+                    cv2.waitKey(0)
+                theta = []
+                pts=[]
+                for ar in range(found):
+                    centroid_x = np.mean([i[1] for i in corners])
+                    theta.append(-40 + (centroid_x*80)/w) #width to w
+                    x,y,z=self.pixel_to_3d(corners[ar][0],corners[ar][1])
+                    x,y,z=z,-x,y
+                    pts.append([x,y,z])
+
+                return found, theta, pts
+        return 0, None, None
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection
@@ -358,7 +422,7 @@ class ArrowDetector:
         )[-2:]
         if visualize:
             cv2.imshow("Image", preprocess(img))
-            cv2.waitKey(0)
+            cv2.waitKey(1)
         # template = cv2.imread("arrow.jpeg")
         max_cnt_area = -1
         for cnt in contours:
@@ -809,7 +873,7 @@ def get_arrow_arr(img, debug=True):
         cv2.imshow("Image", img)
         cv2.waitKey(0)
     for cnt in contours:
-        if cv2.contourArea(cnt) < 200:
+        if cv2.contourArea(cnt) < 80:
             continue
         peri = cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
