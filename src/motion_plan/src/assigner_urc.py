@@ -76,7 +76,7 @@ def gps_goals(type, lat, lon):
                         1,
                     )  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                     # TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
-                    posx, posy, q = my_client.bot_to_map(posx, posy, q, frame="mrt/camera_link")  # map frame
+                    # posx, posy, q = my_client.bot_to_map(posx, posy, q, frame="mrt/camera_link")  # map frame
                     # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                     # move to final positions using AR Tag
                     success = my_client.move_to_goal(
@@ -179,8 +179,8 @@ def gps_goals(type, lat, lon):
                 if flag:
                     posx1, posy1 = pts[0][0], pts[0][1]
                     posx2, posy2 = pts[1][0], pts[1][1]
-                    posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
-                    posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
+                    # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
+                    # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
                     
                 if posx1 is None or posx2 is None:
                     rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
@@ -223,7 +223,7 @@ def gps_goals(type, lat, lon):
                 else:
                     q = (0,0,0,1)  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                     # TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
-                    posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
+                    # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
                     # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                     # move to final positions using AR Tag
                     located=(posx1,posy1)
@@ -246,7 +246,7 @@ def gps_goals(type, lat, lon):
                         found, theta, pts=my_client.urc_recovery(2)
                         # posx, posy, q = my_client.bot_to_map(pts[0], pts[1], q=None, frame="mrt/camera_link")
                         posx2,posy2=pts[0][0],pts[0][1]
-                        posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame    
+                        # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame    
                         if found==1:
                             if (posx2<=located[0]+eps and posx2>=located[1]-eps) and (posy2>=located[1]-eps and posy2<=located[1]+eps):
                                 found=1
@@ -283,13 +283,14 @@ def gps_goals(type, lat, lon):
                 found, theta, pts=my_client.urc_recovery(2)
                 if found==1:
                     posx1,posy1=pts[0][0],pts[0][1]
-                    posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
+                    # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
                     flag=False
                 if found==2:
+                    print('found2 ',pts)
                     posx1,posy1=pts[0][0],pts[0][1]
                     posx2,posy2=pts[1][0],pts[1][1]
-                    posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
-                    posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q=None, frame="mrt/camera_link")  # map frame
+                    # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
+                    # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q=None, frame="mrt/camera_link")  # map frame
                     flag=False    
                 print(counter)
                 counter+=1

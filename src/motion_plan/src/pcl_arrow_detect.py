@@ -422,7 +422,7 @@ class ArrowDetector:
         )[-2:]
         if visualize:
             cv2.imshow("Image", preprocess(img))
-            cv2.waitKey(0)
+            cv2.waitKey(1)
         # template = cv2.imread("arrow.jpeg")
         max_cnt_area = -1
         for cnt in contours:

@@ -75,7 +75,10 @@ class client:
         return gc.ll2xy(lat,lon,self.olat,self.olon)
     def ar_detect(self):
         found,theta,pts=self.arrow_detector.ar_detect()
+        if found==0:
+            return found,theta,pts
         return found,theta,pts
+        # return found,theta,[self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link") for i in pts]
     def cone_detect(self):
         print(self.arrow_detector.cone_detect())
         found,val,cone_distance = self.arrow_detector.cone_detect()
@@ -313,7 +316,9 @@ class client:
             if found==1 and type==2:
                 done[0]+=1
                 done[1].extend(theta)
-                done[2].extend(pts)
+
+                print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
                 if done[0]==2:
                     print('rec return',done[0],done[1],done[2])
                     return done[0],done[1],done[2]
@@ -329,7 +334,7 @@ class client:
         #     print('recovery stage ',j)
         #     j += 1
         if found>0:
-            return found, theta, pts
+            return found, theta, self.bot_to_map(pts[0],pts[1],q=None,frame="mrt/camera_link")
         else:
             return 0, None, None
 
