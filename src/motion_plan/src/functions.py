@@ -334,7 +334,7 @@ class client:
         #     print('recovery stage ',j)
         #     j += 1
         if found>0:
-            return found, theta, self.bot_to_map(pts[0],pts[1],q=None,frame="mrt/camera_link")
+            return found, theta, [self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link") for i in pts]
         else:
             return 0, None, None
 

@@ -199,10 +199,15 @@ def gps_goals(type, lat, lon):
                             # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
 
                             # move to final positions using AR Tag
+                    perp=(posx2-posx1,posy2-posy1)
+                    
                     posx = (posx1 + posx2) / 2.0
                     posy = (posy1 + posy2) / 2.0
+                    _,__,q=my_client.bot_to_map(0,0,q)
+                    my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-0.5))
                     success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     if success == True:
+                        my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=1))
                                 # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                                 # prev_x, prev_y, prev_q = posx, posy, q#map frame
                                 # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
