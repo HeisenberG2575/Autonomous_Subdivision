@@ -15,7 +15,7 @@ import ros_numpy
 import message_filters
 from numpy import nan
 import copy
-#import ConeDetection.detect as cd
+import ConeDetection.detect as cd
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
@@ -41,7 +41,7 @@ class ArrowDetector:
                  info_topic="/mrt/camera/color/camera_info", visualize=False,sim=False):
         self.sim=sim
         self.br = CvBridge()
-        #self.detector = cd.Detector()
+        self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
         self.lagging_pcd = None
@@ -873,7 +873,7 @@ def get_arrow_arr(img, debug=True):
         cv2.imshow("Image", img)
         cv2.waitKey(0)
     for cnt in contours:
-        if cv2.contourArea(cnt) < 200:
+        if cv2.contourArea(cnt) < 80:
             continue
         peri = cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, 0.025 * peri, True)
