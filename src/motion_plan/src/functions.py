@@ -78,8 +78,8 @@ class client:
         found,theta,pts=self.arrow_detector.ar_detect()
         if found==0:
             return found,theta,pts
-        return found,theta,pts
-        # return found,theta,[self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link") for i in pts]
+        # return found,theta,pts
+        return found,theta,[self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link")+[0] for i in pts]
     def cone_detect(self):
         print(self.arrow_detector.cone_detect())
         found,val,cone_distance = self.arrow_detector.cone_detect()
@@ -319,22 +319,22 @@ class client:
                 break
             if found==1 and type==2:
                 if done[0]==1:
-                    comp_x,comp_y,_=self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")
-                    if (comp_x<=done[2][0][0]+eps and comp_x>=done[2][0][0]-eps) and (comp_y>=done[2][0][1]-eps and comp_y<=done[2][0][1]+eps):
+                    comp_x,comp_y,_=pts[0][0],pts[0][1]
+                    if abs(comp_x-done[2][0][0])<eps and abs(comp_y-done[2][0][1])<eps:
                         pass
                     else:   
                         done[0]+=1
                         done[1].extend(theta)
-                        print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
-                        done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                        # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                        done[2].append([pts[0][0],pts[0][1]])
                 if done[0]==2:
                     print('rec return',done[0],done[1],done[2])
                     return done[0],done[1],done[2]
                 else:
                     done[0]+=1
                     done[1].extend(theta)
-                    print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
-                    done[2].append(list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                    # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                    done[2].append([pts[0][0],pts[0][1]])
 
         j = 0
         # while found == False and j < 12:
@@ -348,7 +348,7 @@ class client:
         #     print('recovery stage ',j)
         #     j += 1
         if found>0:
-            return found, theta, [self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link") for i in pts]
+            return found, theta, [[i[0],i[1]] for i in pts]
         else:
             return 0, None, None
 
