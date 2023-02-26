@@ -24,7 +24,6 @@ CALIB_MTX = np.array([[476.7030836014194, 0.0, 400.5],
  [0.0, 476.7030836014194, 400.5],
  [0.0, 0.0, 1.0]])
 DIST = np.array([[ 0.20890098,  0.13254024, -0.03460789, -0.00425681,  0.81484297]])
-DICTIONARY = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
 OFFSET = 0.9
 HORZ_OFFSET = 0.5
 COLOR_OFFSET = 0
@@ -44,6 +43,9 @@ class ArrowDetector:
         self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
+        self.DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.parameters = cv2.aruco.DetectorParameters()
+        self.detector = cv2.aruco.ArucoDetector(self.DICTIONARY,self.parameters)
         self.lagging_pcd = None
         self.lagging_stamp = None
         self.lagging_depth = None
@@ -372,10 +374,10 @@ class ArrowDetector:
         # cv2.imshow("in", im_bw)
         im_bw = image
         #Parameters for the detectors
-        parameters =  cv2.aruco.DetectorParameters_create()
+        parameters = self.parameters
         # parameters.minMarkerPerimeterRate=0.2#default: 0.05
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
-        corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters)
+        corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
         # TODO(Ashwin,Harsh): Use Camera Calibration
         #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix) 

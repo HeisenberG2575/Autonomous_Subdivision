@@ -63,6 +63,7 @@ def gps_goals(type, lat, lon):
             if found == 1:
                 # posx, posy = my_client.find_obs_lidar(theta[0])
                 posx, posy = pts[0][0],pts[0][1]
+                posx, posy, q1 = my_client.bot_to_map(posx, posy, None, frame="mrt/camera_link")
                 if posx is None:
                     rospy.loginfo(
                         "AR Tag detected but not found in LIDAR. Check width/error/arrow detection"
@@ -180,8 +181,8 @@ def gps_goals(type, lat, lon):
                 if flag:
                     posx1, posy1 = pts[0][0], pts[0][1]
                     posx2, posy2 = pts[1][0], pts[1][1]
-                    # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
-                    # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
+                    posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
+                    posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
                     
                 if posx1 is None or posx2 is None:
                     rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
