@@ -79,7 +79,7 @@ class client:
         if found==0:
             return found,theta,pts
         # return found,theta,pts
-        return found,theta,[self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link")+[0] for i in pts]
+        return found,theta,[list(self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link"))+[0] for i in pts]
     def cone_detect(self):
         print(self.arrow_detector.cone_detect())
         found,val,cone_distance = self.arrow_detector.cone_detect()
@@ -319,10 +319,10 @@ class client:
                 break
             if found==1 and type==2:
                 if done[0]==1:
-                    comp_x,comp_y,_=pts[0][0],pts[0][1]
+                    comp_x,comp_y=pts[0][0],pts[0][1]
                     if abs(comp_x-done[2][0][0])<eps and abs(comp_y-done[2][0][1])<eps:
                         pass
-                    else:   
+                    else:
                         done[0]+=1
                         done[1].extend(theta)
                         # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
