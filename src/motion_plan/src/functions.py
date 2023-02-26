@@ -59,6 +59,7 @@ class client:
         self.marker_array_pub = rospy.Publisher(
             "/detected_arrow", MarkerArray, queue_size=10
         )
+        self.led_pub = rospy.Publisher("/rover/tasks_status", String, queue_size=10)
         self.marker_array = MarkerArray()
         self.marker_count = 0
         self.completed_list = []
@@ -241,6 +242,9 @@ class client:
     #       offset = transformations.quaternion_multiply(offset, transformations.quaternion_inverse(q))
     #       return self.move_to_goal(xGoal+offset[0],yGoal+offset[1],q, frame)
 
+    def flash_green(self):
+        self.led_pub.publish("completed")
+    
     def add_to_completed(self, pos_x, pos_y, q):
         self.completed_list.append([pos_x, pos_y, q])
         self.last_good_location = self.find_off_goal(
