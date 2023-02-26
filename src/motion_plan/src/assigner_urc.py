@@ -36,8 +36,8 @@ def main_node():
     #     rospy.sleep(1)
     gps_goal_lat, gps_goal_lon = my_client.xy2gps(0, 4)
     gps_goals(2, gps_goal_lat, gps_goal_lon)
-    gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
-    gps_goals(1, gps_goal_lat, gps_goal_lon)
+#     gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
+#     gps_goals(1, gps_goal_lat, gps_goal_lon)
 
 
 def gps_goals(type, lat, lon):
@@ -209,7 +209,7 @@ def gps_goals(type, lat, lon):
                     posx = (posx1 + posx2) / 2.0
                     posy = (posy1 + posy2) / 2.0
                     
-                    my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-4))
+                    my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-3))
                     success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     if success == True:
                         found,theta,pts = my_client.ar_detect()
@@ -225,6 +225,7 @@ def gps_goals(type, lat, lon):
                                 rospy.loginfo("Reached Post")
                                 return True
                                 # Flash Green LED
+                                my_client.flash_green()
                             else:
                                 rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                                 return False
