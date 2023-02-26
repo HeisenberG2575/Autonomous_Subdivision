@@ -64,6 +64,7 @@ def gps_goals(type, lat, lon):
             if found == 1:
                 # posx, posy = my_client.find_obs_lidar(theta[0])
                 posx, posy = pts[0][0],pts[0][1]
+                # posx, posy, q1 = my_client.bot_to_map(posx, posy, None, frame="mrt/camera_link")
                 if posx is None:
                     rospy.loginfo(
                         "AR Tag detected but not found in LIDAR. Check width/error/arrow detection"
@@ -93,6 +94,7 @@ def gps_goals(type, lat, lon):
                         # my_client.add_to_completed(posx, posy, q)
                         rospy.loginfo("Reached Post")
                         # Flash Green LED
+                        my_client.flash_green()
                         return True
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
@@ -226,9 +228,9 @@ def gps_goals(type, lat, lon):
                                 # my_client.add_to_completed(posx, posy, q)
                             if success_2:
                                 rospy.loginfo("Reached Post")
-                                return True
                                 # Flash Green LED
                                 my_client.flash_green()
+                                return True
                             else:
                                 rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                                 return False
@@ -253,7 +255,7 @@ def gps_goals(type, lat, lon):
                     located=(posx1,posy1)
                     counter1=1
                     while counter1<6:
-                        curr_x,curr_y=0,0
+                        curr_x,curr_y=my_client.gps2xy(lat,lon)
                         posx, posy, q = my_client.bot_to_map(curr_x, curr_y, None)
                         if counter1==1:
                             my_client.move_to_goal(posx+2,posy)

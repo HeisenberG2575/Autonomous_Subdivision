@@ -43,6 +43,9 @@ class ArrowDetector:
         self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
+        self.DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.parameters = cv2.aruco.DetectorParameters()
+        self.detector = cv2.aruco.ArucoDetector(self.DICTIONARY,self.parameters)
         self.lagging_pcd = None
         self.lagging_stamp = None
         self.lagging_depth = None
@@ -376,6 +379,8 @@ class ArrowDetector:
         # cv2.imshow("in", im_bw)
         im_bw = image
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags
+        #Parameters for the detectors
+        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
         corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
         # TODO(Ashwin,Harsh): Use Camera Calibration
