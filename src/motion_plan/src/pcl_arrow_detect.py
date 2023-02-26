@@ -45,6 +45,7 @@ class ArrowDetector:
         self.pcd = None
         self.DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         self.parameters = cv2.aruco.DetectorParameters()
+        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
         self.detector = cv2.aruco.ArucoDetector(self.DICTIONARY,self.parameters)
         self.lagging_pcd = None
         self.lagging_stamp = None
@@ -380,7 +381,9 @@ class ArrowDetector:
         im_bw = image
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         #Parameters for the detectors
-        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
+        
+        
+        #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
         corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
         # TODO(Ashwin,Harsh): Use Camera Calibration
@@ -394,17 +397,48 @@ class ArrowDetector:
                 corners = np.array(corners).reshape(-1,2)
                 # theta = -(np.average(corners, axis=1)[0]/(np.shape(img)[0]) - 0.5)*45*2
                 found = int(len(corners)/4)
-                if self.sim and found>0:
+                if self.visualize and found>0:
                     cv2.imshow('q',img)
                     cv2.waitKey(0)
                 theta = []
                 pts=[]
+                centroids=[]
+                centroid_corners=[]
                 for ar in range(found):
-                    centroid_x = np.mean([i[1] for i in corners])
+                    print(corners)
+                    centroid_x = np.mean([i[0] for i in corners[ar*4:(ar+1)*4]])
+                    centroid_y = np.mean([i[1] for i in corners[ar*4:(ar+1)*4]])
+                    print('centroid',centroid_x,centroid_y)
+                    # centroid_x = np.mean([i[1] for i in corners])
                     theta.append(-40 + (centroid_x*80)/w) #width to w
-                    x,y,z=self.pixel_to_3d(corners[ar][0],corners[ar][1])
+                    centroids.append([centroid_x,centroid_y])
+                    centroid_corners.extend([[centroid_x-5,centroid_y-5],[centroid_x-5,centroid_y+5],[centroid_x+5,centroid_y-5],[centroid_x+5,centroid_y+5]])
+                    x,y,z=self.pixel_to_3d(centroid_x,centroid_y)
                     x,y,z=z,-x,y
                     pts.append([x,y,z])
+                if self.visualize:
+                    # lines = [[0, 1], [1, 2], [2, 3], [3, 0],[4,5],[5,6],[6,7],[7,4]]
+                    lines = [[i*4+j%4,i*4+(j+1)%4] for i in range(found) for j in range(4)]
+                    print(lines)
+                    colors = [[1, 0, 0] for i in range(len(lines))]
+                    line_set = o3d.geometry.LineSet(
+                        points=o3d.utility.Vector3dVector([self.pixel_to_3d(i[0],i[1]) for i in corners]),
+                        lines=o3d.utility.Vector2iVector(lines),
+                    )
+                    line_set2 = o3d.geometry.LineSet(
+                        points=o3d.utility.Vector3dVector([self.pixel_to_3d(i[0],i[1]) for i in centroid_corners]),
+                        lines=o3d.utility.Vector2iVector(lines),
+                    )
+                    line_set2.colors = o3d.utility.Vector3dVector(colors)
+                    line_set.colors = o3d.utility.Vector3dVector(colors)
+                    # self.pc.paint_uniform_color([1.0, 0, 0])
+                    o3d.visualization.draw_geometries(
+                        [self.pc.scale(1000.0, [0,0,0]), line_set,line_set2],
+                        zoom=0.1,
+                        front=[-0.016, -0.22, -1.0],
+                        lookat=[0.27, 0.4, 2.3],
+                        up=[0.0048, -1.0, 0.22],
+                    )
 
                 return found, theta, pts
         return 0, None, None
@@ -1032,9 +1066,11 @@ if __name__ == "__main__":
         rospy.wait_for_message("/mrt/camera/depth/color/points", PointCloud2, timeout=10)
         rospy.sleep(5)
         while not rospy.is_shutdown():
-            found, pos, orient, timestamp, cnt_area = checker.arrow_detect(far=False, visualize=True)
-            print("Found: ", found)
-            found,val,cone_dist=checker.cone_detect(visualize=True)
+            # found, pos, orient, timestamp, cnt_area = checker.arrow_detect(far=False, visualize=True)
+            # print("Found: ", found)
+            # found,val,cone_dist=checker.cone_detect(visualize=True)
+            found,theta,pts=checker.ar_detect()
+            print(found,theta,pts)
             rate.sleep()
     except rospy.ROSInterruptException:
         print("Closing")
