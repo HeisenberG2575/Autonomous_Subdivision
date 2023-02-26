@@ -53,6 +53,11 @@ class ArrowDetector:
         self.info_sub = rospy.Subscriber(
             info_topic, CameraInfo, self.info_callback
         )
+        #Parameters for the detectors
+        self.parameters =  cv2.aruco.DetectorParameters()
+        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
+        self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
+        self.detector = cv2.aruco.ArucoDetector(self.dictionary, self.parameters)
         rospy.wait_for_message(info_topic, CameraInfo, timeout=5)
 
         image_sub = message_filters.Subscriber(ros_image, Image)
@@ -354,7 +359,7 @@ class ArrowDetector:
         return found,pos,cone_distance
 
     def ar_detect(self):
-        
+
         if self.frame is None:
                 return False, None, None
         img = self.frame.copy()
@@ -374,6 +379,7 @@ class ArrowDetector:
         # im_bw = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY)[1]
         # cv2.imshow("in", im_bw)
         im_bw = image
+        #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         #Parameters for the detectors
         
         
@@ -381,11 +387,12 @@ class ArrowDetector:
         corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
         # TODO(Ashwin,Harsh): Use Camera Calibration
-        #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix) 
-        #drawing markers
-        img = cv2.aruco.drawDetectedMarkers(image, corners, ids)
+        #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix)
+        ##drawing markers
+        #img = self.detector.drawDetectedMarkers(image, corners, ids)
+
         if len(corners) > 0:
-                
+
                 #print the coordinates (Can use the returned values)
                 corners = np.array(corners).reshape(-1,2)
                 # theta = -(np.average(corners, axis=1)[0]/(np.shape(img)[0]) - 0.5)*45*2

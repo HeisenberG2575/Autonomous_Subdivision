@@ -9,7 +9,7 @@ from actionlib_msgs.msg import GoalStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Point, Quaternion, PoseStamped, Pose
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, String
 from visualization_msgs.msg import Marker, MarkerArray
 from tf import transformations
 from tf.transformations import quaternion_multiply
