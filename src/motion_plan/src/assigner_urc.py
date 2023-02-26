@@ -93,6 +93,7 @@ def gps_goals(type, lat, lon):
                         # my_client.add_to_completed(posx, posy, q)
                         rospy.loginfo("Reached Post")
                         # Flash Green LED
+                        my_client.flash_green()
                         return True
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
@@ -224,9 +225,9 @@ def gps_goals(type, lat, lon):
                                 # my_client.add_to_completed(posx, posy, q)
                             if success_2:
                                 rospy.loginfo("Reached Post")
+                                # Flash Green LED
                                 my_client.flash_green()
                                 return True
-                                # Flash Green LED
                             else:
                                 rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                                 return False
