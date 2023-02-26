@@ -36,8 +36,8 @@ def main_node():
     #     rospy.sleep(1)
     gps_goal_lat, gps_goal_lon = my_client.xy2gps(0, 4)
     gps_goals(2, gps_goal_lat, gps_goal_lon)
-    gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
-    gps_goals(1, gps_goal_lat, gps_goal_lon)
+#     gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
+#     gps_goals(1, gps_goal_lat, gps_goal_lon)
 
 
 def gps_goals(type, lat, lon):
@@ -209,17 +209,28 @@ def gps_goals(type, lat, lon):
                     posx = (posx1 + posx2) / 2.0
                     posy = (posy1 + posy2) / 2.0
                     
-                    my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-0.5))
+                    my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-3))
                     success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     if success == True:
-                        my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=1))
+                        found,theta,pts = my_client.ar_detect()
+                        if found==2:
+                            posx=(pts[0][0]+pts[1][0])/2
+                            posy=(pts[0][1]+pts[1][1])/2
+                            success_2=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=2))
                                 # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                                 # prev_x, prev_y, prev_q = posx, posy, q#map frame
                                 # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                                 # my_client.add_to_completed(posx, posy, q)
-                        rospy.loginfo("Reached Post")
-                        return True
+                            if success_2:
+                                rospy.loginfo("Reached Post")
+                                return True
                                 # Flash Green LED
+                                my_client.flash_green()
+                            else:
+                                rospy.loginfo("Failed goal: " + str((posx, posy, q)))
+                                return False
+                        else:
+                            continue
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                         return False
