@@ -60,13 +60,10 @@ def gps_goals(type, lat, lon):
         counter=0
         while not rospy.is_shutdown():
             # AR Tag Detection
-            (
-                found,
-                theta,
-                pts
-            ) = (
-                my_client.ar_detect()
-            )  # theta and orient wrt forward direction, in degree
+            if counter==0:
+                my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,0,1))
+                rospy.sleep(1)
+            found,theta,pts = my_client.ar_detect()  # theta and orient wrt forward direction, in degree
             # single post
             if found == 1:
                 # posx, posy = my_client.find_obs_lidar(theta[0])
@@ -157,7 +154,7 @@ def gps_goals(type, lat, lon):
                 curr_x,curr_y=my_client.gps2xy(lat,lon)
                 posx, posy, q = my_client.bot_to_map(curr_x,curr_y, None)
                 if counter==0:
-                    counter+=1  # Sleep for 1-2s and let the bot move towards the goal
+                    pass  # Sleep for 1-2s and let the bot move towards the goal
                 # curr_x,curr_y=my_client.gps2xy(lat,lon)
                 elif counter==1:
                     my_client.move_to_goal(posx+2,posy)
@@ -172,10 +169,11 @@ def gps_goals(type, lat, lon):
                     my_client.move_to_goal(posx,posy-2)
                     print('c4')
                 elif counter==5:
-                    my_client.move_to_goal(*my_client.xy2gps(lat,lon),frame='root_link')
+                    my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,0,1))
                     print('c5')
                 elif counter>5:
                     print('AR not found')
+                    return False
                 found, theta, pts=my_client.urc_recovery()
                 print(counter)
                 counter+=1
