@@ -14,7 +14,7 @@ import rospy
 from cv2 import destroyAllWindows
 
 my_client = functions.client()
-eps=0.2
+eps=0.7
 
 def main_node():
 
@@ -40,9 +40,11 @@ def main_node():
     #gps_goal_lat, gps_goal_lon = my_client.xy2gps(4,0)
     #gps_goals(0,gps_goal_lat, gps_goal_lon)
     #my_client.flash_green()
-    #gps_goal_lat, gps_goal_lon = my_client.xy2gps(6,0)
+    # gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
+    # gps_goal_lat, gps_goal_lon = 19.13312667, 72.91682215#19.13311816, 72.91681638
     #gps_goals(0,gps_goal_lat, gps_goal_lon)
-    gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
+    x,y,q = my_client.bot_to_map(0,12, None)
+    gps_goal_lat, gps_goal_lon = my_client.xy2gps(x,y)
     gps_goals(2, gps_goal_lat, gps_goal_lon)
 #     gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
 #     gps_goals(1, gps_goal_lat, gps_goal_lon)
@@ -50,7 +52,7 @@ def main_node():
 
 def gps_goals(type, lat, lon):
     if type==0:
-        success = my_client.move_to_off_goal_gps(lat, lon)
+        success = my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,1,0))
         if success:
             rospy.loginfo("Reached Post")
         else:
@@ -86,6 +88,8 @@ def gps_goals(type, lat, lon):
                     # posx, posy, q = my_client.bot_to_map(posx, posy, q, frame="mrt/camera_link")  # map frame
                     # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
                     # move to final positions using AR Tag
+                    my_client.add_vert_arrow(posx, posy, q)
+                    _,__,q=my_client.bot_to_map(0,0,q=None,frame='mrt/camera_link')
                     success = my_client.move_to_goal(
                         *my_client.find_off_goal(
                             posx, posy, q=q,frame="map", offset=(-0.5, 0, 0, 0) #chec offset needed
@@ -187,7 +191,8 @@ def gps_goals(type, lat, lon):
         while not rospy.is_shutdown():
             # AR Tag Detection
             if counter==0:
-                my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,0,1))
+                _,_,q = my_client.bot_to_map(0,0,None)
+                my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=q)
                 print('c6')
                 rospy.sleep(2)
             if flag:
@@ -225,10 +230,12 @@ def gps_goals(type, lat, lon):
                     q=functions.q_from_vector3D([perp[0],perp[1],0])
                     posx = (posx1 + posx2) / 2.0
                     posy = (posy1 + posy2) / 2.0
-                    my_client.add_arrow(posx1, posy1, q, color=(0,0.5,0.5))
-                    my_client.add_arrow(posx2, posy2, q, color=(0,0.5,0.5))
+                    # my_client.add_arrow(posx1, posy1, q, color=(0,0.5,0.5))
+                    # my_client.add_arrow(posx2, posy2, q, color=(0,0.5,0.5))
+                    my_client.add_vert_arrow(posx1, posy1, q)
+                    my_client.add_vert_arrow(posx2, posy2, q)
 
-                    success=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-3))
+                    success=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-4))
                     print('c7')
                     #success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     #print('c8')
@@ -237,7 +244,7 @@ def gps_goals(type, lat, lon):
                         if found==2:
                             posx=(pts[0][0]+pts[1][0])/2
                             posy=(pts[0][1]+pts[1][1])/2
-                            success_2=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=0.75))
+                            success_2=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=0.5))
                                 # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                                 # prev_x, prev_y, prev_q = posx, posy, q#map frame
                                 # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
