@@ -27,7 +27,7 @@ USE_ROBUST_ARROW_DETECT = 1
 MAX_ARROW_DETECT = 3
 ARROW_MAX_ITER = 7
 CNT_AREA_THRES = 20
-eps=0.5
+eps=0.7
 class client:
     def __init__(self):
         rospy.init_node("goal_client_node")
@@ -35,10 +35,10 @@ class client:
 
         # define a client for to send goal requests to the move_base server through a SimpleActionClient
         self.ac = actionlib.SimpleActionClient("move_base", MoveBaseAction)
-        self.olat,self.olon=49.8999997, 8.90000001
+        self.olat,self.olon=19.13322909, 72.91685103 #49.8999997, 8.90000001
         # rospy.Subscriber('/LatLon',Float64MultiArray,self.gps_callback)
         # rospy.wait_for_message("/LatLon", Float64MultiArray, timeout=5)
-        
+
         # wait for the action server to come up
         while (
             not self.ac.wait_for_server(rospy.Duration.from_sec(2.0))
@@ -73,7 +73,9 @@ class client:
         return gc.xy2ll(x,y,self.olat,self.olon)
 
     def gps2xy(self, lat, lon):
-        return gc.ll2xy(lat,lon,self.olat,self.olon)
+        y, x = gc.ll2xy(lat,lon,self.olat,self.olon)
+        y = -y
+        return x, y
     def ar_detect(self):
         found,theta,pts=self.arrow_detector.ar_detect()
         if found==0:
@@ -103,7 +105,8 @@ class client:
                 if found:
                     count += 1
             if count >= MAX_ARROW_DETECT:
-                var_arr = [cnt_area_arr[i] for i in range(len(cnt_area_arr)) if found_arr[i]]
+                var_arr = [cnt_area_arr[i] for i in range(len(cnt_area_arr))
+                           if found_arr[i]]
                 if np.var(np.array(var_arr)) > CNT_AREA_THRES:
                     return False, None, None, timestamp
                 else:
@@ -183,7 +186,7 @@ class client:
             frame = "map"
         self.send_goal(xGoal, yGoal, q, frame)
 
-        self.ac.wait_for_result(rospy.Duration(60))
+        self.ac.wait_for_result(rospy.Duration(150))
 
         if self.ac.get_state() == GoalStatus.SUCCEEDED:
             rospy.loginfo("You have reached the destination")
@@ -244,12 +247,16 @@ class client:
 
     def flash_green(self):
         self.led_pub.publish("completed")
-    
+
     def add_to_completed(self, pos_x, pos_y, q):
         self.completed_list.append([pos_x, pos_y, q])
         self.last_good_location = self.find_off_goal(
             pos_x, pos_y, q=q, frame="map", offset=(0, 1, 0, 0)
         )
+    def add_vert_arrow(self,x,y,q):
+        q_right = (0, -np.sqrt(0.5), 0, np.sqrt(0.5))
+        q_right = quaternion_multiply(uncast_quaternion(q), q_right)
+        self.add_arrow(x, y, q_right, color=(0,1,0))
 
     def is_complete(self, pos_x, pos_y, q):
         for ps in self.completed_list:
@@ -308,7 +315,7 @@ class client:
         while j < 10:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
-            q = quaternion_multiply(q, (0, 0, np.sin(0.3), np.cos(0.3)))
+            q = quaternion_multiply(q, (0, 0, -np.sin(0.3), np.cos(0.3)))
             self.move_to_goal(x, y, q)
             rospy.sleep(1.0)
             found, theta, pts = self.ar_detect()

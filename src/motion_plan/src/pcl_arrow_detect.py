@@ -58,6 +58,7 @@ class ArrowDetector:
         # parameters.minMarkerPerimeterRate=0.2#default: 0.05
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
         self.detector = cv2.aruco.ArucoDetector(self.dictionary, self.parameters)
+        self.ar_pub = rospy.Publisher("mrt/camera/detected", Image, queue_size=10)
         rospy.wait_for_message(info_topic, CameraInfo, timeout=5)
 
         image_sub = message_filters.Subscriber(ros_image, Image)
@@ -381,15 +382,17 @@ class ArrowDetector:
         im_bw = image
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         #Parameters for the detectors
-        
-        
-        #return values: corners, Tag ID array (nonetype), rejected candidates for tags 
+
+
+        #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
         # TODO(Ashwin,Harsh): Use Camera Calibration
         #corners, ids, rejects = cv2.aruco.detectMarkers(im_bw, DICTIONARY, parameters=parameters,cameraMatrix=cameraMatrix)
         ##drawing markers
-        #img = self.detector.drawDetectedMarkers(image, corners, ids)
+        img = cv2.aruco.drawDetectedMarkers(image, corners, ids)
+        ros_img = self.br.cv2_to_imgmsg(img, encoding="bgr8")
+        self.ar_pub.publish(ros_img)
 
         if len(corners) > 0:
 
