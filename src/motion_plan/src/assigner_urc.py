@@ -15,6 +15,7 @@ from cv2 import destroyAllWindows
 
 my_client = functions.client()
 eps=0.7
+search_offset=2
 
 def main_node():
 
@@ -43,14 +44,17 @@ def main_node():
     # gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
     # gps_goal_lat, gps_goal_lon = 19.13312667, 72.91682215#19.13311816, 72.91681638
     #gps_goals(0,gps_goal_lat, gps_goal_lon)
-    x,y,q = my_client.bot_to_map(0,12, None)
-    gps_goal_lat, gps_goal_lon = my_client.xy2gps(x,y)
+    # x,y,q = my_client.bot_to_map(-11.5,7, None)
+    # gps_goal_lat, gps_goal_lon = my_client.xy2gps(-5,0)
+    # gps_goals(0, gps_goal_lat, gps_goal_lon)
+    gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
     gps_goals(2, gps_goal_lat, gps_goal_lon)
 #     gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
 #     gps_goals(1, gps_goal_lat, gps_goal_lon)
 
 
 def gps_goals(type, lat, lon):
+    goal_xy_x,goal_xy_y=my_client.gps2xy(lat,lon)
     if type==0:
         success = my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,1,0))
         if success:
@@ -65,7 +69,7 @@ def gps_goals(type, lat, lon):
             if counter==0:
                 my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,0,1))
                 rospy.sleep(1)
-            found,theta,pts = my_client.ar_detect()  # theta and orient wrt forward direction, in degree
+            found, pts = my_client.ar_detect()  # theta and orient wrt forward direction, in degree
             # single post
             if found == 1:
                 # posx, posy = my_client.find_obs_lidar(theta[0])
@@ -78,12 +82,7 @@ def gps_goals(type, lat, lon):
                     found = False
 
                 else:
-                    q = (
-                        0,
-                        0,
-                        0,
-                        1,
-                    )  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                    q = (0,0,0,1,)  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                     # TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
                     # posx, posy, q = my_client.bot_to_map(posx, posy, q, frame="mrt/camera_link")  # map frame
                     # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
@@ -155,30 +154,16 @@ def gps_goals(type, lat, lon):
                 #         return False
 
             else:
-                curr_x,curr_y=my_client.gps2xy(lat,lon)
-                posx, posy, q = my_client.bot_to_map(curr_x,curr_y, None)
+                goal_list=[None,[goal_xy_x+search_offset,goal_xy_y],[goal_xy_x,goal_xy_y+search_offset],[goal_xy_x-search_offset,goal_xy_y],[goal_xy_x,goal_xy_y-search_offset],[goal_xy_x,goal_xy_y]]
                 if counter==0:
                     pass  # Sleep for 1-2s and let the bot move towards the goal
                 # curr_x,curr_y=my_client.gps2xy(lat,lon)
-                elif counter==1:
-                    my_client.move_to_goal(posx+2,posy)
-                    print('c2')
-                elif counter==2:
-                    my_client.move_to_goal(posx,posy+2)
-                    print('c3')
-                elif counter==3:
-                    my_client.move_to_goal(posx-2,posy)
-                    print('c33')
-                elif counter==4:
-                    my_client.move_to_goal(posx,posy-2)
-                    print('c4')
-                elif counter==5:
-                    my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=(0,0,0,1))
-                    print('c5')
+                elif counter>=1 and counter<=5:
+                    my_client.move_to_goal(goal_list[counter][0],goal_list[counter][1])
                 elif counter>5:
                     print('AR not found')
                     return False
-                found, theta, pts=my_client.urc_recovery()
+                found, pts=my_client.urc_recovery()
                 print(counter)
                 counter+=1
     elif type==2:
@@ -186,7 +171,7 @@ def gps_goals(type, lat, lon):
         rospy.loginfo("Gate Post Traversal")
         posx1,posy1,q1=None,None,None
         posx2,posy2,q2=None,None,None
-        flag=True
+        initial_found=True
         counter=0
         while not rospy.is_shutdown():
             # AR Tag Detection
@@ -195,11 +180,11 @@ def gps_goals(type, lat, lon):
                 my_client.move_to_goal(*my_client.gps2xy(lat,lon),q=q)
                 print('c6')
                 rospy.sleep(2)
-            if flag:
-                found,theta,pts = my_client.ar_detect()
-                print('flag',found,theta,pts)  # theta and orient wrt forward
+            if initial_found:
+                found,pts = my_client.ar_detect()
+                print('initial_found',found,pts)  # theta and orient wrt forward
             if found==2:
-                if flag:
+                if initial_found:
                     posx1, posy1 = pts[0][0], pts[0][1]
                     posx2, posy2 = pts[1][0], pts[1][1]
                     # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q, frame="mrt/camera_link")  # map frame
@@ -209,12 +194,7 @@ def gps_goals(type, lat, lon):
                     rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
                     found = False
                 else:
-                    q = (
-                        0,
-                        0,
-                        0,
-                        1
-                        )  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
+                    q = (0,0,0,1)  # (0,0,np.sin(np.pi * orient/(2*180)), np.cos(np.pi * orient/(2*180)))
                     # TODO Add a check if arrow found is nearly in the direction of the previous arrow(or add a warning if it is)
                     print('goals',posx1, posy1, q1,posx2, posy2, q2)
                     # assert abs(norm([posx1 - posx2, posy1 - posy2]) - 2) <= 0.5
@@ -222,7 +202,7 @@ def gps_goals(type, lat, lon):
                             # rospy.loginfo("\n arrow found at (in map frame): \n" + str(my_client.bot_to_map(posx, posy, q)))
 
                             # move to final positions using AR Tag
-                    c_x,c_y,q=my_client.bot_to_map(0,0,q)
+                    c_x,c_y,q=my_client.bot_to_map(0,0,q) #current bot
                     vec=[posx1-c_x,posy1-c_y]
                     perp=[-(posy2-posy1)/(posx2-posx1),1]
                     if np.dot(vec,perp)<0:
@@ -240,7 +220,7 @@ def gps_goals(type, lat, lon):
                     #success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     #print('c8')
                     if success == True:
-                        found,theta,pts = my_client.ar_detect()
+                        found,pts = my_client.ar_detect()
                         if found==2:
                             posx=(pts[0][0]+pts[1][0])/2
                             posy=(pts[0][1]+pts[1][1])/2
@@ -267,7 +247,7 @@ def gps_goals(type, lat, lon):
                         return False
             if found == 1:
                 # posx, posy = my_client.find_obs_lidar(theta[0])
-                if flag:
+                if initial_found:
                     posx1, posy1 = pts[0][0],pts[0][1]
                 if posx1 is None:
                     rospy.loginfo("AR Tag detected but not found in LIDAR. Check width/error/arrow detection")
@@ -281,38 +261,24 @@ def gps_goals(type, lat, lon):
                     located=(posx1,posy1)
                     counter1=0
                     while counter1<6:
-                        curr_x,curr_y=my_client.gps2xy(lat,lon)
-                        posx, posy, q = my_client.bot_to_map(curr_x, curr_y, None)
+                        goal_list=[None,[goal_xy_x+search_offset,goal_xy_y],[goal_xy_x,goal_xy_y+search_offset],[goal_xy_x-search_offset,goal_xy_y],[goal_xy_x,goal_xy_y-search_offset],[goal_xy_x,goal_xy_y]]
                         if counter1==0:
                             pass
-                        elif counter1==1:
-                            print('c11')
-                            my_client.move_to_goal(posx+2,posy)
-                        elif counter1==2:
-                            print('c12')
-                            my_client.move_to_goal(posx,posy+2)
-                        elif counter1==3:
-                            print('c13')
-                            my_client.move_to_goal(posx-2,posy)
-                        elif counter1==4:
-                            print('c14')
-                            my_client.move_to_goal(posx,posy-2)
-                        elif counter1==5:
-                            print('c15')
-                            my_client.move_to_goal(*my_client.xy2gps(lat,lon),frame='root_link')
+                        elif counter1>=1 and counter1<=5:
+                            my_client.move_to_goal(goal_list[counter1][0],goal_list[counter1][1])
                         elif counter1>5:
                             print('AR not found')
-                        found, theta, pts=my_client.urc_recovery(2)
+                        found, pts=my_client.urc_recovery(2)
                         # posx, posy, q = my_client.bot_to_map(pts[0], pts[1], q=None, frame="mrt/camera_link")
                         posx2,posy2=pts[0][0],pts[0][1]
                         # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
                         if found==1:
-                            if (posx2<=located[0]+eps and posx2>=located[1]-eps) and (posy2>=located[1]-eps and posy2<=located[1]+eps):
+                            if abs(posx2-located[0])<eps and abs(posy2-located[1])<eps:
                                 found=1
                                 posx2, posy2, q2=None,None,None
                             else:
                                 found+=1
-                                flag=False
+                                initial_found=False
                                 break
                         if found==2:
                             break
@@ -320,43 +286,29 @@ def gps_goals(type, lat, lon):
                         counter1+=1
 
             else:
-                curr_x,curr_y=my_client.gps2xy(lat,lon)
-                posx, posy, q = my_client.bot_to_map(curr_x,curr_y, None)
+                goal_list=[None,[goal_xy_x+search_offset,goal_xy_y],[goal_xy_x,goal_xy_y+search_offset],[goal_xy_x-search_offset,goal_xy_y],[goal_xy_x,goal_xy_y-search_offset],[goal_xy_x,goal_xy_y]]
                 if counter==0:
                     print('completed counter 0')
                     rospy.sleep(1)  # Sleep for 1-2s and let the bot move towards the goal
                 # curr_x,curr_y=my_client.gps2xy(lat,lon)
                 # curr_x,curr_y=0,0
-                elif counter==1:
-                    print('c16')
-                    my_client.move_to_goal(posx+2,posy)
-                elif counter==2:
-                    print('c17')
-                    my_client.move_to_goal(posx,posy+2)
-                elif counter==3:
-                    print('c18')
-                    my_client.move_to_goal(posx-2,posy)
-                elif counter==4:
-                    print('c19')
-                    my_client.move_to_goal(posx,posy-2)
-                elif counter==5:
-                    print('c20')
-                    my_client.move_to_goal(*my_client.xy2gps(lat,lon),frame='root_link')
+                elif counter>=1 and counter<=5:
+                    my_client.move_to_goal(goal_list[counter][0],goal_list[counter][1])
                 elif counter>5:
                     print('AR not found')
                     break
-                found, theta, pts=my_client.urc_recovery(2)
+                found, pts=my_client.urc_recovery(2)
                 if found==1:
                     posx1,posy1=pts[0][0],pts[0][1]
                     # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
-                    flag=False
+                    initial_found=False
                 if found==2:
                     print('found2 ',pts)
                     posx1,posy1=pts[0][0],pts[0][1]
                     posx2,posy2=pts[1][0],pts[1][1]
                     # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
                     # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q=None, frame="mrt/camera_link")  # map frame
-                    flag=False
+                    initial_found=False
                 print('counter',counter)
                 counter+=1
 

@@ -77,11 +77,11 @@ class client:
         y = -y
         return x, y
     def ar_detect(self):
-        found,theta,pts=self.arrow_detector.ar_detect()
+        found,pts=self.arrow_detector.ar_detect()
         if found==0:
-            return found,theta,pts
+            return found,pts
         # return found,theta,pts
-        return found,theta,[list(self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link"))+[0] for i in pts]
+        return found,[list(self.bot_to_map(i[0],i[1],q=None,frame="mrt/camera_link"))+[0] for i in pts]
     def cone_detect(self):
         print(self.arrow_detector.cone_detect())
         found,val,cone_distance = self.arrow_detector.cone_detect()
@@ -309,39 +309,38 @@ class client:
 
     def urc_recovery(self,type=1):
         rospy.loginfo("Initiating recovery")
-        found, theta, pts = self.ar_detect()
+        found, pts = self.ar_detect()
         j = 0
-        done=[0,[],[]]
-        while j < 10:
+        discovered=[0,[]]
+        while j < 11:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, -np.sin(0.3), np.cos(0.3)))
             self.move_to_goal(x, y, q)
             rospy.sleep(1.0)
-            found, theta, pts = self.ar_detect()
-            print(found, theta, pts)
+            found, pts = self.ar_detect()
+            print(found, pts)
             print('recovery stage ',j)
             j += 1
             if found==type:
                 break
             if found==1 and type==2:
-                if done[0]==1:
+                if discovered[0]==1:
                     comp_x,comp_y=pts[0][0],pts[0][1]
-                    if abs(comp_x-done[2][0][0])<eps and abs(comp_y-done[2][0][1])<eps:
+                    if abs(comp_x-discovered[1][0][0])<eps and abs(comp_y-discovered[1][0][1])<eps:
                         pass
                     else:
-                        done[0]+=1
-                        done[1].extend(theta)
+                        discovered[0]+=1
+                        
                         # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
-                        done[2].append([pts[0][0],pts[0][1]])
-                if done[0]==2:
-                    print('rec return',done[0],done[1],done[2])
-                    return done[0],done[1],done[2]
+                        discovered[1].append([pts[0][0],pts[0][1]])
+                if discovered[0]==2:
+                    print('rec return',discovered[0],discovered[1])
+                    return discovered[0],discovered[1]
                 else:
-                    done[0]+=1
-                    done[1].extend(theta)
+                    discovered[0]+=1
                     # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
-                    done[2].append([pts[0][0],pts[0][1]])
+                    discovered[1].append([pts[0][0],pts[0][1]])
 
         j = 0
         # while found == False and j < 12:
@@ -355,9 +354,9 @@ class client:
         #     print('recovery stage ',j)
         #     j += 1
         if found>0:
-            return found, theta, [[i[0],i[1]] for i in pts]
+            return found, [[i[0],i[1]] for i in pts]
         else:
-            return 0, None, None
+            return 0, None
 
 
     def add_arrow(
