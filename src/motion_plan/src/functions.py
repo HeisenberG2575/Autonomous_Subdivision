@@ -307,6 +307,93 @@ class client:
         else:
             return found, pos, orient, timestamp
 
+    def urc_recovery_final_stage(self):
+        found,pts=self.ar_detect()
+        j = 0
+        discovered=[0,[]]
+        while j < 3:
+            x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+            q = uncast_quaternion(q)
+            q = quaternion_multiply(q, (0, 0, -np.sin(0.3), np.cos(0.3)))
+            self.move_to_goal(x, y, q)
+            rospy.sleep(1.0)
+            found, pts = self.ar_detect()
+            print(found, pts)
+            print('recovery stage ',j)
+            j += 1
+            if found==type:
+                break
+            if found==1 and type==2:
+                if discovered[0]==1:
+                    comp_x,comp_y=pts[0][0],pts[0][1]
+                    if abs(comp_x-discovered[1][0][0])<eps and abs(comp_y-discovered[1][0][1])<eps:
+                        pass
+                    else:
+                        discovered[0]+=1
+                        
+                        # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                        discovered[1].append([pts[0][0],pts[0][1]])
+                if discovered[0]==2:
+                    print('rec return',discovered[0],discovered[1])
+                    return discovered[0],discovered[1]
+                else:
+                    discovered[0]+=1
+                    # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                    discovered[1].append([pts[0][0],pts[0][1]])
+
+        j = 0
+        x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+        q = uncast_quaternion(q)
+        q = quaternion_multiply(q, (0, 0, np.sin(0.9), np.cos(0.9)))
+        self.move_to_goal(x, y, q)
+        while j < 3:
+            x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+            q = uncast_quaternion(q)
+            q = quaternion_multiply(q, (0, 0, np.sin(0.3), np.cos(0.3)))
+            self.move_to_goal(x, y, q)
+            rospy.sleep(1.0)
+            found, pts = self.ar_detect()
+            print(found, pts)
+            print('recovery stage ',j)
+            j += 1
+            if found==type:
+                break
+            if found==1 and type==2:
+                if discovered[0]==1:
+                    comp_x,comp_y=pts[0][0],pts[0][1]
+                    if abs(comp_x-discovered[1][0][0])<eps and abs(comp_y-discovered[1][0][1])<eps:
+                        pass
+                    else:
+                        discovered[0]+=1
+                        
+                        # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                        discovered[1].append([pts[0][0],pts[0][1]])
+                if discovered[0]==2:
+                    print('rec return',discovered[0],discovered[1])
+                    return discovered[0],discovered[1]
+                else:
+                    discovered[0]+=1
+                    # print('conv',pts,list(self.bot_to_map(pts[0][0],pts[0][1],q=None,frame="mrt/camera_link")))
+                    discovered[1].append([pts[0][0],pts[0][1]])
+
+            
+        # while found == False and j < 12:
+        #     x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+        #     q = uncast_quaternion(q)
+        #     q = quaternion_multiply(q, (0, 0, np.sin(-0.2), np.cos(-0.2)))
+        #     self.move_to_goal(x, y, q)
+        #     rospy.sleep(1.0)
+        #     found, theta, pts = self.ar_detect()
+        #     print(found, theta, pts)
+        #     print('recovery stage ',j)
+        #     j += 1
+        if found>0:
+            return found, [[i[0],i[1]] for i in pts]
+        else:
+            return 0, None
+
+
+
     def urc_recovery(self,type=1):
         rospy.loginfo("Initiating recovery")
         found, pts = self.ar_detect()

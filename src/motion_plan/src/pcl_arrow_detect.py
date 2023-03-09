@@ -15,7 +15,7 @@ import ros_numpy
 import message_filters
 from numpy import nan
 import copy
-# import ConeDetection.detect as cd
+import ConeDetection.detect as cd
 
 path = rospkg.RosPack().get_path("motion_plan")
 MARKERS_MAX = 50
@@ -40,7 +40,7 @@ class ArrowDetector:
                  info_topic="/mrt/camera/color/camera_info", visualize=False,sim=False):
         self.sim=sim
         self.br = CvBridge()
-        # self.detector = cd.Detector()
+        self.detector = cd.Detector()
         self.visualize=visualize
         self.pcd = None
         self.DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)

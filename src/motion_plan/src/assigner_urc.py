@@ -216,7 +216,7 @@ def gps_goals(type, lat, lon):
                     my_client.add_vert_arrow(posx2, posy2, q)
 
                     success=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=-4))
-                    print('c7')
+                    # print('c7')
                     #success = my_client.move_to_goal(posx, posy, q=q, frame="map")
                     #print('c8')
                     if success == True:
@@ -229,7 +229,7 @@ def gps_goals(type, lat, lon):
                                 # prev_x, prev_y, prev_q = posx, posy, q#map frame
                                 # my_client.add_arrow(prev_x, prev_y, prev_q, (1,0,1))
                                 # my_client.add_to_completed(posx, posy, q)
-                            print('c9')
+                            # print('c9')
                             if success_2:
                                 rospy.loginfo("Reached Post")
                                 # Flash Green LED
@@ -241,7 +241,7 @@ def gps_goals(type, lat, lon):
                                 rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                                 return False
                         else:
-                            continue
+                            my_client.urc_recovery_final_stage()
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                         return False
