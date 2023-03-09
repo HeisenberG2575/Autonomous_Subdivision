@@ -403,7 +403,7 @@ class ArrowDetector:
                 if self.visualize and found>0:
                     cv2.imshow('q',img)
                     cv2.waitKey(0)
-                theta = []
+                # theta = []
                 pts=[]
                 centroids=[]
                 centroid_corners=[]
@@ -413,7 +413,7 @@ class ArrowDetector:
                     centroid_y = np.mean([i[1] for i in corners[ar*4:(ar+1)*4]])
                     print('centroid',centroid_x,centroid_y)
                     # centroid_x = np.mean([i[1] for i in corners])
-                    theta.append(-40 + (centroid_x*80)/w) #width to w
+                    # theta.append(-40 + (centroid_x*80)/w) #width to w
                     centroids.append([centroid_x,centroid_y])
                     centroid_corners.extend([[centroid_x-5,centroid_y-5],[centroid_x-5,centroid_y+5],[centroid_x+5,centroid_y-5],[centroid_x+5,centroid_y+5]])
                     x,y,z=self.pixel_to_3d(centroid_x,centroid_y)
@@ -443,7 +443,7 @@ class ArrowDetector:
                         up=[0.0048, -1.0, 0.22],
                     )
 
-                return found, theta, pts
+                return found, pts
         return 0, None, None
 
     def arrow_detect(self, far=True, visualize=False):
@@ -1072,8 +1072,8 @@ if __name__ == "__main__":
             # found, pos, orient, timestamp, cnt_area = checker.arrow_detect(far=False, visualize=True)
             # print("Found: ", found)
             # found,val,cone_dist=checker.cone_detect(visualize=True)
-            found,theta,pts=checker.ar_detect()
-            print(found,theta,pts)
+            found,pts=checker.ar_detect()
+            print(found,pts)
             rate.sleep()
     except rospy.ROSInterruptException:
         print("Closing")
