@@ -45,7 +45,7 @@ class ArrowDetector:
         self.pcd = None
         self.DICTIONARY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         self.parameters = cv2.aruco.DetectorParameters()
-        # parameters.minMarkerPerimeterRate=0.2#default: 0.05
+        self.parameters.minMarkerPerimeterRate=0.2 #default: 0.05
         self.detector = cv2.aruco.ArucoDetector(self.DICTIONARY,self.parameters)
         self.lagging_pcd = None
         self.lagging_stamp = None
@@ -444,7 +444,7 @@ class ArrowDetector:
                     )
 
                 return found, pts
-        return 0, None, None
+        return 0, None
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection

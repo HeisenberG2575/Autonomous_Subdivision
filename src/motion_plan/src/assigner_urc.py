@@ -14,7 +14,7 @@ import rospy
 from cv2 import destroyAllWindows
 
 my_client = functions.client()
-eps=0.7
+eps=1
 search_offset=2
 
 def main_node():
@@ -24,7 +24,7 @@ def main_node():
         0, 0, (0, 0, 0, 1)
     )  # prev always in map frame
     olat, olon = my_client.olat, my_client.olon
-
+    print(olat,olon)
     # = (0,0,0,1)#TODO change prev here to initial bot location which may not be 0
     # my_client.move_to_goal(0.5,0)
     # x,y,q =  1,0,(0,0,np.sin(np.pi/8), np.cos(np.pi/8))
@@ -42,15 +42,15 @@ def main_node():
     #gps_goals(0,gps_goal_lat, gps_goal_lon)
     #my_client.flash_green()
     # gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
-    # gps_goal_lat, gps_goal_lon = 19.13312667, 72.91682215#19.13311816, 72.91681638
+    #gps_goal_lat, gps_goal_lon = 19.13311, 72.916715
     #gps_goals(0,gps_goal_lat, gps_goal_lon)
-    # x,y,q = my_client.bot_to_map(-11.5,7, None)
+    x,y,q = my_client.bot_to_map(5,0,None)
     # gps_goal_lat, gps_goal_lon = my_client.xy2gps(-5,0)
     # gps_goals(0, gps_goal_lat, gps_goal_lon)
-    gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
+    # gps_goal_lat, gps_goal_lon = my_client.xy2gps(0,0)
+    #gps_goals(0, gps_goal_lat, gps_goal_lon)
+    gps_goal_lat, gps_goal_lon = my_client.xy2gps(x,y)
     gps_goals(2, gps_goal_lat, gps_goal_lon)
-#     gps_goal_lat, gps_goal_lon = my_client.xy2gps(-10, -3)
-#     gps_goals(1, gps_goal_lat, gps_goal_lon)
 
 
 def gps_goals(type, lat, lon):
@@ -222,8 +222,10 @@ def gps_goals(type, lat, lon):
                     if success == True:
                         found,pts = my_client.ar_detect()
                         if found==2:
-                            posx=(pts[0][0]+pts[1][0])/2
-                            posy=(pts[0][1]+pts[1][1])/2
+                            my_client.add_vert_arrow(pts[0][0],pts[0][1],q,color=(1,0,0))
+                            my_client.add_vert_arrow(pts[1][0],pts[1][1],q,color=(1,0,0))
+                            posx=((pts[0][0]+pts[1][0])/2 + posx)/2
+                            posy=((pts[0][1]+pts[1][1])/2 + posy)/2
                             success_2=my_client.move_to_goal(*my_client.find_xy_off_goal(posx, posy, q=q, frame="map",off_dist=0,ahead=0.5))
                                 # my_client.add_arrow(*my_client.bot_to_map(posx, posy, q), color=(0,1,1))
                                 # prev_x, prev_y, prev_q = posx, posy, q#map frame
@@ -270,7 +272,8 @@ def gps_goals(type, lat, lon):
                             print('AR not found')
                         found, pts=my_client.urc_recovery(2)
                         # posx, posy, q = my_client.bot_to_map(pts[0], pts[1], q=None, frame="mrt/camera_link")
-                        posx2,posy2=pts[0][0],pts[0][1]
+                        if pts is not None:
+                            posx2,posy2=pts[0][0],pts[0][1]
                         # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
                         if found==1:
                             if abs(posx2-located[0])<eps and abs(posy2-located[1])<eps:

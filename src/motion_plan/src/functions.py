@@ -27,7 +27,7 @@ USE_ROBUST_ARROW_DETECT = 1
 MAX_ARROW_DETECT = 3
 ARROW_MAX_ITER = 7
 CNT_AREA_THRES = 20
-eps=0.7
+eps=1
 class client:
     def __init__(self):
         rospy.init_node("goal_client_node")
@@ -54,6 +54,7 @@ class client:
         self.lidar_data = None
         rospy.Subscriber("/map", OccupancyGrid, self.mapCallBack)
         rospy.Subscriber("/scan_filtered", LaserScan, self.lidar_callback)
+        rospy.Subscriber('/LatLon',Float64MultiArray,self.gps_callback)
         self.arrow_detector = ArrowDetector()
         print("ArrowDetector Launched")
         self.marker_array_pub = rospy.Publisher(
@@ -73,8 +74,8 @@ class client:
         return gc.xy2ll(x,y,self.olat,self.olon)
 
     def gps2xy(self, lat, lon):
-        y, x = gc.ll2xy(lat,lon,self.olat,self.olon)
-        y = -y
+        x,y = gc.ll2xy(lat,lon,self.olat,self.olon)
+        #y = -y
         return x, y
     def ar_detect(self):
         found,pts=self.arrow_detector.ar_detect()
@@ -253,10 +254,10 @@ class client:
         self.last_good_location = self.find_off_goal(
             pos_x, pos_y, q=q, frame="map", offset=(0, 1, 0, 0)
         )
-    def add_vert_arrow(self,x,y,q):
+    def add_vert_arrow(self,x,y,q,color=(0,1,0)):
         q_right = (0, -np.sqrt(0.5), 0, np.sqrt(0.5))
         q_right = quaternion_multiply(uncast_quaternion(q), q_right)
-        self.add_arrow(x, y, q_right, color=(0,1,0))
+        self.add_arrow(x, y, q_right, color=color)
 
     def is_complete(self, pos_x, pos_y, q):
         for ps in self.completed_list:
@@ -399,7 +400,7 @@ class client:
         found, pts = self.ar_detect()
         j = 0
         discovered=[0,[]]
-        while j < 11:
+        while j < 22:
             x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
             q = uncast_quaternion(q)
             q = quaternion_multiply(q, (0, 0, -np.sin(0.3), np.cos(0.3)))

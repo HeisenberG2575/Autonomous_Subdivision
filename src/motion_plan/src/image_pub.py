@@ -17,8 +17,8 @@ class ImagePublisher:
         else:
             self.get_camera()
             self.vid = cv2.VideoCapture(self.device_num)
-        self.vid.set(cv2.CAP_PROP_FRAME_WIDTH,160)
-        self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT,120)
+        self.vid.set(cv2.CAP_PROP_FRAME_WIDTH,640)
+        self.vid.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
         print(f'id: {self.id} w,h: {self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)}, {self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)}')
         self.counter=0
         self.br = CvBridge()
