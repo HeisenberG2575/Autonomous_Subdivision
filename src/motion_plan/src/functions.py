@@ -60,7 +60,7 @@ class client:
             "/detected_arrow", MarkerArray, queue_size=10
         )
         self.led_pub = rospy.Publisher("/rover/tasks_status", String, queue_size=10)
-        self.cam_servo_pub = rospy.Publisher('servo topic', Int32, queue_size=20)
+        self.cam_servo_pub = rospy.Publisher('/rover/auto_cam_angle', Int32, queue_size=20)
         self.marker_array = MarkerArray()
         self.marker_count = 0
         self.completed_list = []
@@ -313,31 +313,40 @@ class client:
         else:
             return found, pos, orient, timestamp
 
-    def urc_recovery_final_stage(self,iterations:int=3+1+3,angle:float=0.6,move_rover:bool=True): #iterations represents counter_clockwise=3 + reset_to_center=1 + clockwise=3 ; angle to move in rad
+    def urc_recovery_oscillate(self,type:int=1,iterations:int=3+1+3,angle:float=0.6,move_rover:bool=False,full_rotation:bool=True): #iterations represents counter_clockwise=3 + reset_to_center=1 + clockwise=3 ; angle to move in rad
         found,pts=self.ar_detect()
         j = 1
         discovered=[0,[]]
+        rotations = 0
         while j < iterations+1:
             if move_rover:
                 x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
                 q = uncast_quaternion(q)
                 q = quaternion_multiply(q, (0, 0, np.sin(angle/2), np.cos(angle/2)))
-                if j%((iterations-1)/2)==0:
+                if j%((iterations+1)/2)==0:
                     angle = -angle
                     q = quaternion_multiply(q, (0, 0, np.sin(((iterations+1)/2)*angle/2), np.cos(((iterations+1)/2)*angle/2)))
                 self.move_to_goal(x, y, q)
             else:
-                self.cam_servo_angle += int(angle*180/np.pi) % 360
-                if j%((iterations-1)/2)==0:
+                if abs(self.cam_servo_angle + int(angle*180/np.pi))<90 :
+                        self.cam_servo_angle += int(angle*180/np.pi)
+                else:
+                    self.cam_servo_angle = int(90*self.cam_servo_angle/self.cam_servo_angle)
+                if j%((iterations+1)/2)==0:
                     angle = -angle
-                    self.cam_servo_angle += int(((iterations+1)/2)*angle*180/np.pi) % 360
-                self.move_cam_servo(int(angle*180/np.pi))
+                    if abs(self.cam_servo_angle + int(((iterations+1)/2)*angle*180/np.pi))<90 :
+                        self.cam_servo_angle += int(((iterations+1)/2)*angle*180/np.pi)
+                    else:
+                        self.cam_servo_angle = int(90*self.cam_servo_angle/self.cam_servo_angle)
+                self.move_cam_servo(self.cam_servo_angle)
             rospy.sleep(1.0)
             found, pts = self.ar_detect()
             print(found, pts)
             print('recovery stage ',j)
             j += 1
             if found==type:
+                self.cam_servo_angle = 0
+                self.move_cam_servo(self.cam_servo_angle)
                 break
             if found==1 and type==2:
                 if discovered[0]==1:
@@ -353,6 +362,16 @@ class client:
                 else:
                     discovered[0]+=1
                     discovered[1].append([pts[0][0],pts[0][1]])    
+
+            if full_rotation and rotations==0:
+                j=1
+                self.cam_servo_angle = 0
+                self.move_cam_servo(self.cam_servo_angle)
+                x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
+                q = uncast_quaternion(q)
+                q = quaternion_multiply(q, (0, 0, 1, 0))
+                self.move_to_goal(x, y, q)
+                
         # while found == False and j < 12:
         #     x, y, q = self.bot_to_map(0, 0, (0, 0, 0, 1))
         #     q = uncast_quaternion(q)
@@ -363,6 +382,8 @@ class client:
         #     print(found, theta, pts)
         #     print('recovery stage ',j)
         #     j += 1
+        self.cam_servo_angle = 0
+        self.move_cam_servo(self.cam_servo_angle)
         if found>0:
             return found, [[i[0],i[1]] for i in pts]
         else:
@@ -383,13 +404,15 @@ class client:
                 self.move_to_goal(x, y, q)
             else:
                 self.cam_servo_angle += int(move_by_rad*180/np.pi) % 360
-                self.move_cam_servo(int(move_by_rad*180/np.pi))
+                self.move_cam_servo(self.cam_servo_angle)
             rospy.sleep(1.0)
             found, pts = self.ar_detect()
             print(found, pts)
             print('recovery stage ',j)
             j += 1
             if found==type:
+                self.cam_servo_angle = 0
+                self.move_cam_servo(self.cam_servo_angle)
                 break
             if found==1 and type==2:
                 if discovered[0]==1:
@@ -420,6 +443,8 @@ class client:
         #     print(found, theta, pts)
         #     print('recovery stage ',j)
         #     j += 1
+        self.cam_servo_angle = 0
+        self.move_cam_servo(self.cam_servo_angle)
         if found>0:
             return found, [[i[0],i[1]] for i in pts]
         else:

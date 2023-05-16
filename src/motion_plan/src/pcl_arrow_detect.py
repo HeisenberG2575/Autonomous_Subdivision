@@ -362,7 +362,7 @@ class ArrowDetector:
     def ar_detect(self):
 
         if self.frame is None:
-                return False, None, None
+                return False, None
         img = self.frame.copy()
         #self.lagging_pcd = o3d.geometry.PointCloud(self.pcd)
         self.lagging_pcd=self.pcd
@@ -382,8 +382,9 @@ class ArrowDetector:
         im_bw = image
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         #Parameters for the detectors
-
-
+        if self.visualize:
+            cv2.imshow('frame',img)
+            cv2.waitKey(0)
         #return values: corners, Tag ID array (nonetype), rejected candidates for tags
         corners, ids, rejects = self.detector.detectMarkers(im_bw)
         # print(corners,ids,rejects)
@@ -423,7 +424,7 @@ class ArrowDetector:
                     # lines = [[0, 1], [1, 2], [2, 3], [3, 0],[4,5],[5,6],[6,7],[7,4]]
                     lines = [[i*4+j%4,i*4+(j+1)%4] for i in range(found) for j in range(4)]
                     print(lines)
-                    colors = [[1, 0, 0] for i in range(len(lines))]
+                    colors = [[0, 1, 1] for i in range(len(lines))]
                     line_set = o3d.geometry.LineSet(
                         points=o3d.utility.Vector3dVector([self.pixel_to_3d(i[0],i[1]) for i in corners]),
                         lines=o3d.utility.Vector2iVector(lines),
@@ -436,15 +437,15 @@ class ArrowDetector:
                     line_set.colors = o3d.utility.Vector3dVector(colors)
                     # self.pc.paint_uniform_color([1.0, 0, 0])
                     o3d.visualization.draw_geometries(
-                        [self.pc.scale(1000.0, [0,0,0]), line_set,line_set2],
+                        [self.pc, line_set,line_set2],
                         zoom=0.1,
                         front=[-0.016, -0.22, -1.0],
                         lookat=[0.27, 0.4, 2.3],
                         up=[0.0048, -1.0, 0.22],
                     )
-
+                print(found,pts)
                 return found, pts
-        return 0, None, None
+        return 0, None
 
     def arrow_detect(self, far=True, visualize=False):
         # Arrow detection

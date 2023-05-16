@@ -163,7 +163,7 @@ def gps_goals(type, lat, lon):
                 elif counter>5:
                     print('AR not found')
                     return False
-                found, pts=my_client.urc_recovery()
+                found, pts=my_client.urc_recovery_oscillate(type=1,iterations=9,angle=0.4)
                 print(counter)
                 counter+=1
     elif type==2:
@@ -241,7 +241,7 @@ def gps_goals(type, lat, lon):
                                 rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                                 return False
                         else:
-                            my_client.urc_recovery_final_stage()
+                            my_client.urc_recovery_oscillate(type=2,full_rotation=False)
                     else:
                         rospy.loginfo("Failed goal: " + str((posx, posy, q)))
                         return False
@@ -268,9 +268,10 @@ def gps_goals(type, lat, lon):
                             my_client.move_to_goal(goal_list[counter1][0],goal_list[counter1][1])
                         elif counter1>5:
                             print('AR not found')
-                        found, pts=my_client.urc_recovery(2)
+                        found, pts=my_client.urc_recovery_oscillate(type=2,iterations=9,angle=0.4)
                         # posx, posy, q = my_client.bot_to_map(pts[0], pts[1], q=None, frame="mrt/camera_link")
-                        posx2,posy2=pts[0][0],pts[0][1]
+                        if pts is not None : 
+                            posx2,posy2=pts[0][0],pts[0][1]
                         # posx2, posy2, q2 = my_client.bot_to_map(posx2, posy2, q, frame="mrt/camera_link")  # map frame
                         if found==1:
                             if abs(posx2-located[0])<eps and abs(posy2-located[1])<eps:
@@ -297,7 +298,7 @@ def gps_goals(type, lat, lon):
                 elif counter>5:
                     print('AR not found')
                     break
-                found, pts=my_client.urc_recovery(2)
+                found, pts=my_client.urc_recovery_oscillate(type=2,iterations=9,angle=0.4)
                 if found==1:
                     posx1,posy1=pts[0][0],pts[0][1]
                     # posx1, posy1, q1 = my_client.bot_to_map(posx1, posy1, q=None, frame="mrt/camera_link")  # map frame
